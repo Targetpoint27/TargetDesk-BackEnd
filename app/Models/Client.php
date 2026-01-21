@@ -117,4 +117,36 @@ class Client extends Model
     {
         return $this->contacts()->count();
     }
+
+    /**
+     * Get the notes for this client
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ClientNote::class);
+    }
+
+    /**
+     * Get the call logs for this client
+     */
+    public function callLogs(): HasMany
+    {
+        return $this->hasMany(CallLog::class);
+    }
+
+    /**
+     * Get the appointments for this client
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    /**
+     * Get the interactions for this client
+     */
+    public function interactions(): HasMany
+    {
+        return $this->hasMany(ClientInteraction::class);
+    }
 }

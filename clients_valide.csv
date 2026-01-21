@@ -1,0 +1,6 @@
+name,type,email,phone,address,siret,sector,website,notes
+"Entreprise ACME SARL","entreprise","contact@acme-sarl.com","0123456789","123 Rue de la République, 75001 Paris","12345678901234","Technologie","https://acme-sarl.com","Client important - Contrat annuel"
+"Jean Dupont","particulier","jean.dupont@email.com","0987654321","456 Avenue des Champs, 69000 Lyon","","Conseil","","Client VIP depuis 2020"
+"Tech Solutions SAS","entreprise","hello@techsolutions.fr","0145678923","789 Boulevard Saint-Germain, 75007 Paris","98765432109876","Informatique","https://tech-solutions.fr","Spécialiste en développement web"
+"Marie Martin","particulier","marie.martin@gmail.com","0678945612","321 Rue Victor Hugo, 13000 Marseille","","Marketing","https://marie-martin.com","Consultante freelance"
+"Global Industries","entreprise","info@global-industries.com","0156789234","654 Place de la Bastille, 75011 Paris","11223344556677","Industrie","https://global-industries.com","Gros client - facturation mensuelle"

@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ClientImportExportController;
+use App\Http\Controllers\Api\V1\ClientNoteController;
+use App\Http\Controllers\Api\V1\CallLogController;
+use App\Http\Controllers\Api\V1\AppointmentController;
+use App\Http\Controllers\Api\V1\ClientTimelineController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,6 +92,39 @@ Route::prefix('v1')->group(function () {
         Route::get('clients/export/template', [ClientImportExportController::class, 'downloadTemplate']);
         Route::get('clients/export/template/excel', [ClientImportExportController::class, 'downloadExcelTemplate']);
         Route::post('clients/export', [ClientImportExportController::class, 'export']);
+
+        // Client notes management
+        Route::get('clients/{client}/notes', [ClientNoteController::class, 'index']);
+        Route::post('clients/{client}/notes', [ClientNoteController::class, 'store']);
+        Route::get('notes/{note}', [ClientNoteController::class, 'show']);
+        Route::put('notes/{note}', [ClientNoteController::class, 'update']);
+        Route::delete('notes/{note}', [ClientNoteController::class, 'destroy']);
+        Route::post('notes/{note}/pin', [ClientNoteController::class, 'togglePin']);
+        Route::post('notes/{note}/attachments', [ClientNoteController::class, 'addAttachment']);
+        Route::delete('notes/attachments/{attachment}', [ClientNoteController::class, 'removeAttachment']);
+
+        // Call logs management
+        Route::get('clients/{client}/calls', [CallLogController::class, 'index']);
+        Route::post('clients/{client}/calls', [CallLogController::class, 'store']);
+        Route::get('calls/{call}', [CallLogController::class, 'show']);
+        Route::put('calls/{call}', [CallLogController::class, 'update']);
+        Route::delete('calls/{call}', [CallLogController::class, 'destroy']);
+        Route::put('calls/{call}/complete-follow-up', [CallLogController::class, 'completeFollowUp']);
+        Route::get('dashboard/calls/follow-ups', [CallLogController::class, 'pendingFollowUps']);
+
+        // Appointments management
+        Route::get('clients/{client}/appointments', [AppointmentController::class, 'index']);
+        Route::post('clients/{client}/appointments', [AppointmentController::class, 'store']);
+        Route::get('appointments/{appointment}', [AppointmentController::class, 'show']);
+        Route::put('appointments/{appointment}', [AppointmentController::class, 'update']);
+        Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy']);
+        Route::put('appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
+        Route::get('dashboard/appointments/today', [AppointmentController::class, 'today']);
+        Route::get('dashboard/appointments/upcoming', [AppointmentController::class, 'upcoming']);
+
+        // Client timeline management
+        Route::get('clients/{client}/timeline', [ClientTimelineController::class, 'index']);
+        Route::get('dashboard/interactions', [ClientTimelineController::class, 'dashboard']);
 
         // Add protected API routes here
     });

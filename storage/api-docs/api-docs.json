@@ -134,6 +134,320 @@
                 ]
             }
         },
+        "/v1/clients/{client}/appointments": {
+            "get": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Liste des rendez-vous client",
+                "operationId": "f05d4eb26813939ea47b1808b9c4e487",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "planned",
+                                "confirmed",
+                                "completed",
+                                "cancelled",
+                                "postponed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rendez-vous récupérés"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Planifier un rendez-vous",
+                "operationId": "c0bc42a2e2cdab88a3e4ad75ce7fcb16",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "datetime"
+                                    },
+                                    "duration": {
+                                        "type": "integer"
+                                    },
+                                    "location": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "commercial",
+                                            "support",
+                                            "demo",
+                                            "negotiation",
+                                            "closing",
+                                            "other"
+                                        ]
+                                    },
+                                    "participants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rendez-vous planifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/appointments/{appointment}": {
+            "get": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Détails d'un rendez-vous",
+                "operationId": "92639b3511a294551b907753ec561ddc",
+                "parameters": [
+                    {
+                        "name": "appointment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rendez-vous trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Modifier un rendez-vous",
+                "operationId": "8599ac841eb01cccdc6ba325a0d44d91",
+                "parameters": [
+                    {
+                        "name": "appointment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rendez-vous modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Supprimer un rendez-vous",
+                "operationId": "5cad3956a57e264ca5cb197d31d69ed7",
+                "parameters": [
+                    {
+                        "name": "appointment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Rendez-vous supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/appointments/{appointment}/status": {
+            "put": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Changer le statut d'un rendez-vous",
+                "operationId": "e91979e1c72dcd8c70b1dc33e565d7cf",
+                "parameters": [
+                    {
+                        "name": "appointment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "planned",
+                                            "confirmed",
+                                            "completed",
+                                            "cancelled",
+                                            "postponed"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statut modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/dashboard/appointments/today": {
+            "get": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Rendez-vous du jour",
+                "operationId": "00a8b72cd1df49c0380b79f194da8f19",
+                "responses": {
+                    "200": {
+                        "description": "Rendez-vous d'aujourd'hui"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/dashboard/appointments/upcoming": {
+            "get": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Prochains rendez-vous",
+                "operationId": "0f43c87d321014d7a5cba0426ed13e9f",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Prochains rendez-vous"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/auth/register": {
             "post": {
                 "tags": [
@@ -490,6 +804,279 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/clients/{client}/calls": {
+            "get": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Liste des appels client",
+                "operationId": "3ed5844b06e73f1ec256befb669f8cef",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "incoming",
+                                "outgoing",
+                                "missed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "outcome",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "positive",
+                                "neutral",
+                                "negative",
+                                "no_answer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "follow_up_required",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Appels récupérés"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Enregistrer un appel client",
+                "operationId": "b2f989d9475ba72101810901f327fd7d",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "contact_id": {
+                                        "type": "integer"
+                                    },
+                                    "phone_number": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "incoming",
+                                            "outgoing",
+                                            "missed"
+                                        ]
+                                    },
+                                    "called_at": {
+                                        "type": "string",
+                                        "format": "datetime"
+                                    },
+                                    "duration": {
+                                        "type": "integer"
+                                    },
+                                    "subject": {
+                                        "type": "string"
+                                    },
+                                    "summary": {
+                                        "type": "string"
+                                    },
+                                    "outcome": {
+                                        "type": "string",
+                                        "enum": [
+                                            "positive",
+                                            "neutral",
+                                            "negative",
+                                            "no_answer"
+                                        ]
+                                    },
+                                    "follow_up_required": {
+                                        "type": "boolean"
+                                    },
+                                    "follow_up_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Appel enregistré"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/calls/{call}": {
+            "get": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Détails d'un appel",
+                "operationId": "1604986dbb6c9480a7793fccac90967b",
+                "parameters": [
+                    {
+                        "name": "call",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Appel trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Modifier un appel",
+                "operationId": "085a9a6e547132f97fcdd256df874742",
+                "parameters": [
+                    {
+                        "name": "call",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Appel modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Supprimer un appel",
+                "operationId": "d1ee67cd82482a72b20e95d6c6d7ef8a",
+                "parameters": [
+                    {
+                        "name": "call",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Appel supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/dashboard/calls/follow-ups": {
+            "get": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Appels nécessitant un suivi",
+                "operationId": "f4a63a8c9af70dbed28afad792136a97",
+                "responses": {
+                    "200": {
+                        "description": "Suivis récupérés"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/calls/{call}/complete-follow-up": {
+            "put": {
+                "tags": [
+                    "Call Logs"
+                ],
+                "summary": "Marquer le suivi comme terminé",
+                "operationId": "79014a53b9265150f62d2a685de85610",
+                "parameters": [
+                    {
+                        "name": "call",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Suivi terminé"
                     }
                 },
                 "security": [
@@ -1503,6 +2090,33 @@
                 ]
             }
         },
+        "/v1/clients/export/template/excel": {
+            "get": {
+                "tags": [
+                    "Client Import/Export"
+                ],
+                "summary": "Download Excel import template",
+                "description": "Get Excel template file for client import",
+                "operationId": "6153bdfd85c7a09bd421a719bcf379d9",
+                "responses": {
+                    "200": {
+                        "description": "Excel template file",
+                        "content": {
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/export": {
             "post": {
                 "tags": [
@@ -1560,6 +2174,347 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/clients/{client}/notes": {
+            "get": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Liste des notes client",
+                "operationId": "159240f3b8a2ea12e476bf31c99180cb",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "normal",
+                                "important",
+                                "private"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "pinned_only",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notes récupérées"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Créer une note client",
+                "operationId": "9dbfcba5de06541f6bbc95b0f55e9848",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "normal",
+                                            "important",
+                                            "private"
+                                        ]
+                                    },
+                                    "is_pinned": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Note créée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/notes/{note}": {
+            "get": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Détails d'une note",
+                "operationId": "d9f683229b3e8200c55aa814ca42445d",
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Note trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Modifier une note",
+                "operationId": "7c8b808fa7c605047c8a6cef920ea0d9",
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Note modifiée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Supprimer une note",
+                "operationId": "2525e761fb4dd18678917fd43278334b",
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Note supprimée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/notes/{note}/pin": {
+            "post": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Épingler/désépingler une note",
+                "operationId": "fea29e8525b41a90d454992950b54055",
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Note épinglée/désépinglée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/notes/{note}/attachments": {
+            "post": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Ajouter un fichier à une note",
+                "operationId": "c14ad620314040c4ae61f76b5f5be7bb",
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Fichier ajouté"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/notes/attachments/{attachment}": {
+            "delete": {
+                "tags": [
+                    "Client Notes"
+                ],
+                "summary": "Supprimer un fichier joint",
+                "operationId": "5147d36855af596857c0834dd1457281",
+                "parameters": [
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Fichier supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/clients/{client}/timeline": {
+            "get": {
+                "tags": [
+                    "Client Timeline"
+                ],
+                "summary": "Timeline chronologique client",
+                "operationId": "2a98f696315173aece078726849f6c6f",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "note",
+                                "call",
+                                "appointment"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Timeline récupérée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/dashboard/interactions": {
+            "get": {
+                "tags": [
+                    "Client Timeline"
+                ],
+                "summary": "Dashboard interactions",
+                "operationId": "d4d898f44083b7b2cae2bf731a60470e",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard récupéré"
                     }
                 },
                 "security": [
@@ -2673,8 +3628,24 @@
     },
     "tags": [
         {
+            "name": "Appointments",
+            "description": "Gestion des rendez-vous client"
+        },
+        {
+            "name": "Call Logs",
+            "description": "Journal des appels client"
+        },
+        {
             "name": "Categories",
             "description": "Gestion des catégories pour la segmentation des clients"
+        },
+        {
+            "name": "Client Notes",
+            "description": "Gestion des notes client"
+        },
+        {
+            "name": "Client Timeline",
+            "description": "Historique unifié des interactions client"
         },
         {
             "name": "System",

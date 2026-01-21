@@ -58,4 +58,12 @@ class BaseApiController extends Controller
 
         return response()->json($response, $code);
     }
+
+    /**
+     * Validation error response
+     */
+    protected function validationErrorResponse(\Illuminate\Validation\ValidationException $e): JsonResponse
+    {
+        return $this->errorResponse('Erreur de validation', 422, $e->errors());
+    }
 }

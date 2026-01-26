@@ -149,4 +149,28 @@ class Client extends Model
     {
         return $this->hasMany(ClientInteraction::class);
     }
+
+    /**
+     * Get the emails for this client
+     */
+    public function emails(): HasMany
+    {
+        return $this->hasMany(ClientEmail::class);
+    }
+
+    /**
+     * Get the opportunities for this client
+     */
+    public function opportunities(): HasMany
+    {
+        return $this->hasMany(Opportunity::class);
+    }
+
+    /**
+     * Get the audit logs for this client
+     */
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class);
+    }
 }

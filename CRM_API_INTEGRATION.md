@@ -3,16 +3,20 @@
 ## Vue d'ensemble
 Cette documentation présente l'intégration complète des fonctionnalités CRM de TargetDesk : notes client, journal d'appels, rendez-vous et timeline unifiée.
 
-**✅ Dernière mise à jour :** 20 janvier 2026
-**🚀 Version API :** v1.0
-**📊 Endpoints disponibles :** 30+ endpoints CRM complets
+**✅ Dernière mise à jour :** 21 janvier 2026
+**🚀 Version API :** v1.1
+**📊 Endpoints disponibles :** 35+ endpoints CRM complets
 
 ## ⚡ Statut des tests
 - ✅ **Notes client** : Tous les endpoints testés et fonctionnels
 - ✅ **Journal d'appels** : CRUD complet implémenté
 - ✅ **Rendez-vous** : Endpoint corrigé, création/modification/statuts OK
-- ✅ **Timeline unifiée** : Auto-synchronisation validée
+- ✅ **Timeline unifiée** : Auto-synchronisation validée + 6 types d'interactions
 - ✅ **Dashboard** : Statistiques et vues d'ensemble opérationnelles
+- ✅ **Export timeline** : CSV/Excel avec liens détails automatiques
+- 🆕 **Emails** : Modèles et relations créés (endpoints à venir)
+- 🆕 **Opportunités** : Structure complète avec pipeline commercial
+- 🆕 **Audit logs** : Traçabilité automatique des modifications
 
 ## Authentification
 Toutes les requêtes nécessitent un token Bearer dans l'en-tête Authorization :
@@ -306,7 +310,7 @@ GET /api/v1/clients/{clientId}/timeline
 ```
 
 **Paramètres de requête :**
-- `type` (optionnel) : `note`, `call`, `appointment`
+- `type` (optionnel) : `note`, `call`, `appointment`, `email`, `opportunity`, `modification`
 - `user_id` (optionnel) : filtrer par utilisateur
 - `date_from` (optionnel) : date de début
 - `date_to` (optionnel) : date de fin
@@ -357,6 +361,60 @@ GET /api/v1/clients/{clientId}/timeline
 GET /api/v1/dashboard/interactions?days=7&limit=50
 ```
 
+### 3. Export de la timeline (NOUVEAU)
+```http
+GET /api/v1/clients/{clientId}/timeline/export?format=csv
+```
+
+**Paramètres de requête :**
+- `format` (optionnel) : `csv`, `xlsx` (défaut: csv)
+
+**Fonctionnalités d'export :**
+- ✅ Export CSV/Excel complet de l'historique
+- ✅ Métadonnées d'export (date, utilisateur, client)
+- ✅ Aperçu des données avant téléchargement
+- ✅ Liens détails automatiques pour chaque interaction
+- ✅ Gestion des timelines vides
+- ✅ Validation des formats et gestion d'erreurs
+- ✅ Structure de colonnes standardisée
+
+**Réponse export réussi :**
+```json
+{
+  "success": true,
+  "message": "Export préparé",
+  "data": {
+    "filename": "timeline_client_1_2026-01-22_09-18-47.csv",
+    "format": "csv",
+    "records_count": 11,
+    "download_url": "http://localhost/exports/timeline_client_1_2026-01-22_09-18-47.csv",
+    "metadata": {
+      "exported_at": "2026-01-22 09:18:47",
+      "exported_by": "Nom Utilisateur",
+      "client_info": {
+        "id": 1,
+        "client_id": "CLI-E76E2DC4GQ",
+        "name": "Entreprise ACME SARL"
+      },
+      "date_range": {
+        "from": "2026-01-20 14:36:40",
+        "to": "2026-01-22 10:00:00"
+      },
+      "types_included": ["appointment", "call", "note"],
+      "total_by_type": {
+        "appointment": 6,
+        "call": 1,
+        "note": 4
+      }
+    },
+    "preview_data": [...],
+    "columns": ["Date", "Type", "Titre", "Résumé", "Utilisateur", "Importance", "Confidentialité", "Lien détail"]
+  }
+}
+```
+
+**📋 Documentation complète :** Voir [EXPORT_TIMELINE_DOCUMENTATION.md](./EXPORT_TIMELINE_DOCUMENTATION.md) pour tests complets, exemples d'intégration et cas d'usage.
+
 ---
 
 ## 🔧 CODES D'ERREUR COMMUNS
@@ -384,23 +442,45 @@ GET /api/v1/dashboard/interactions?days=7&limit=50
 
 ## 📊 FONCTIONNALITÉS AVANCÉES
 
+### ✨ NOUVEAUTÉS - Janvier 2026
+
+#### 📧 Types d'interactions étendus
+- **Emails** : Gestion des emails entrants/sortants avec pièces jointes
+- **Opportunités** : Suivi du pipeline commercial avec montants et probabilités
+- **Modifications** : Journal d'audit automatique des changements
+
+#### 🔗 Liens détails automatiques
+- Chaque entrée timeline inclut un lien direct vers l'API détail
+- Format : `http://localhost/api/v1/{type}/{id}`
+- Support pour tous les types d'interactions
+
+#### 📊 Export avancé
+- Export CSV/Excel de la timeline complète
+- Aperçu des données avant téléchargement
+- Statistiques d'export (nombre d'enregistrements, format)
+
 ### Synchronisation automatique avec la timeline
-- Toutes les notes, appels et rendez-vous sont automatiquement ajoutés à la timeline
+- Toutes les notes, appels, rendez-vous, emails et opportunités sont automatiquement ajoutés à la timeline
 - Les modifications sont répercutées en temps réel
 - La suppression d'un élément supprime aussi son entrée timeline
+- Journal d'audit automatique pour traçabilité complète
 
 ### Niveaux de confidentialité
 - **public** : Visible par tous les utilisateurs
 - **private** : Visible uniquement par le créateur
+- **team** : Visible par l'équipe (futur)
 
 ### Niveaux d'importance
+- **low** : Éléments de faible priorité
 - **normal** : Importance standard
 - **high** : Éléments prioritaires (notes importantes, rendez-vous de démo)
+- **critical** : Urgences et alertes
 
 ### Filtres et recherche
-- Filtrage par type, utilisateur, date
+- Filtrage par type (6 types supportés), utilisateur, date
 - Recherche textuelle (titre, contenu)
 - Pagination pour de gros volumes
+- Export sélectif selon les filtres appliqués
 
 ---
 

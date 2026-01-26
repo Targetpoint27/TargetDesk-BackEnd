@@ -124,6 +124,7 @@ Route::prefix('v1')->group(function () {
 
         // Client timeline management
         Route::get('clients/{client}/timeline', [ClientTimelineController::class, 'index']);
+        Route::get('clients/{client}/timeline/export', [ClientTimelineController::class, 'export']);
         Route::get('dashboard/interactions', [ClientTimelineController::class, 'dashboard']);
 
         // Add protected API routes here

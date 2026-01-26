@@ -12,6 +12,9 @@
         {
             "url": "http://localhost:8000/api",
             "description": "Local development server"
+        },
+        {
+            "url": "/api/v1"
         }
     ],
     "paths": {
@@ -2480,7 +2483,10 @@
                             "enum": [
                                 "note",
                                 "call",
-                                "appointment"
+                                "appointment",
+                                "email",
+                                "opportunity",
+                                "modification"
                             ]
                         }
                     },
@@ -2515,6 +2521,55 @@
                 "responses": {
                     "200": {
                         "description": "Dashboard récupéré"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/clients/{client}/timeline/export": {
+            "get": {
+                "tags": [
+                    "Client Timeline"
+                ],
+                "summary": "Exporter timeline en CSV/Excel",
+                "operationId": "d00cb1edec5b0b52697666b4da210a94",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "csv",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "download",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Export généré"
                     }
                 },
                 "security": [

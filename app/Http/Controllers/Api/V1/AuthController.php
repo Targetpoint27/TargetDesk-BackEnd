@@ -118,6 +118,14 @@ class AuthController extends BaseApiController
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Invalid credentials")
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Account disabled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Votre compte est désactivé. Veuillez contacter l'administrateur.")
+     *         )
      *     )
      * )
      */
@@ -133,6 +141,16 @@ class AuthController extends BaseApiController
         }
 
         $user = Auth::user();
+
+        // Vérifier si l'utilisateur est actif
+        if ($user->status !== 'active') {
+            Auth::logout();
+            return $this->errorResponse('Votre compte est désactivé. Veuillez contacter l\'administrateur.', 403);
+        }
+
+        // Mettre à jour la date de dernière connexion
+        $user->update(['last_login' => now()]);
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->successResponse([
@@ -140,6 +158,9 @@ class AuthController extends BaseApiController
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'status' => $user->status,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
             ],
             'token' => $token
         ], 'Login successful');

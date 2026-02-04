@@ -25,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register model observers
         \App\Models\Contact::observe(\App\Observers\ContactObserver::class);
+        \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);
     }
 }

@@ -157,6 +157,16 @@ class AppointmentController extends BaseApiController
                 }
             }
 
+            // Déclencher manuellement la programmation des rappels après ajout des participants
+            if (isset($validated['participants']) && count($validated['participants']) > 0) {
+                // Recharger l'appointment avec les participants pour l'Observer
+                $appointment->refresh();
+                $appointment->load('participants');
+
+                // Déclencher manuellement la programmation des rappels pour les participants
+                app('App\Observers\AppointmentObserver')->scheduleRemindersForParticipants($appointment);
+            }
+
             $appointment->load(['user:id,name', 'participants.contact:id,first_name,last_name']);
 
             return $this->successResponse($appointment, 'Rendez-vous planifié', 201);

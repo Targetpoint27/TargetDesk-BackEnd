@@ -144,4 +144,12 @@ class Supplier extends Model
     {
         return $this->contacts()->count();
     }
+
+    /**
+     * Relation avec les documents du fournisseur
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(SupplierDocument::class);
+    }
 }

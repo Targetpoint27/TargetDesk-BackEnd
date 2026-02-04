@@ -25,6 +25,7 @@ class CallLog extends Model
     public function client(): BelongsTo { return $this->belongsTo(Client::class); }
     public function contact(): BelongsTo { return $this->belongsTo(Contact::class); }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function interaction(): MorphOne { return $this->morphOne(ClientInteraction::class, 'reference'); }
 
     protected static function boot()

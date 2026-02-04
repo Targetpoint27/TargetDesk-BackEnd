@@ -19,9 +19,23 @@ class ApiMiddleware
         // Set headers for API responses
         $response = $next($request);
 
-        $response->headers->set('Content-Type', 'application/json');
+        // Don't override Content-Type for file endpoints (download/preview)
+        if (!$this->isFileEndpoint($request)) {
+            $response->headers->set('Content-Type', 'application/json');
+        }
+
         $response->headers->set('X-API-Version', '1.0.0');
 
         return $response;
+    }
+
+    /**
+     * Check if the request is for a file endpoint that should not have JSON content type
+     */
+    private function isFileEndpoint(Request $request): bool
+    {
+        $uri = $request->getRequestUri();
+
+        return str_contains($uri, '/download') || str_contains($uri, '/preview');
     }
 }

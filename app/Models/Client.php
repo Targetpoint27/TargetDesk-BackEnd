@@ -173,4 +173,12 @@ class Client extends Model
     {
         return $this->hasMany(AuditLog::class);
     }
+
+    /**
+     * Get the documents for this client
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ClientDocument::class);
+    }
 }

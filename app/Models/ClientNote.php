@@ -43,6 +43,14 @@ class ClientNote extends Model
     }
 
     /**
+     * Relation vers l'utilisateur créateur (alias)
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
      * Relation vers les attachements
      */
     public function attachments(): HasMany

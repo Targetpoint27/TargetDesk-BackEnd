@@ -24,6 +24,7 @@ class Appointment extends Model
 
     public function client(): BelongsTo { return $this->belongsTo(Client::class); }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function participants(): HasMany { return $this->hasMany(AppointmentParticipant::class); }
     public function interaction(): MorphOne { return $this->morphOne(ClientInteraction::class, 'reference'); }
 

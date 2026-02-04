@@ -669,6 +669,26 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Account disabled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Votre compte est désactivé. Veuillez contacter l'administrateur."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1689,6 +1709,144 @@
                 ]
             }
         },
+        "/v1/clients/search": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Quick search clients",
+                "description": "Search clients for autocomplete functionality",
+                "operationId": "04c5c03541657262044506573408c003",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search term (minimum 2 characters)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of results",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "fuzzy",
+                        "in": "query",
+                        "description": "Enable fuzzy search for typos",
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Résultats de recherche"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "results": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "client_id": {
+                                                                "type": "string",
+                                                                "example": "CLI-ABC123XYZ4"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Entreprise ACME"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "contact@acme.com"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "entreprise"
+                                                            },
+                                                            "highlighted_field": {
+                                                                "type": "string",
+                                                                "example": "name"
+                                                            },
+                                                            "match_score": {
+                                                                "type": "number",
+                                                                "example": 0.9499999999999999555910790149937383830547332763671875
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "query": {
+                                                    "type": "string",
+                                                    "example": "acme"
+                                                },
+                                                "total_found": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Search term too short",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le terme de recherche doit contenir au moins 2 caractères"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{id}": {
             "get": {
                 "tags": [
@@ -1888,6 +2046,572 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Client non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/documents": {
+            "get": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Lister les documents d'un client",
+                "operationId": "0de2dc27fb7a98c970e2ebc734f74b0f",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Filtrer par catégorie",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "contrat",
+                                "devis",
+                                "facture",
+                                "autre"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Trier par",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "date",
+                                "type",
+                                "category",
+                                "size"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des documents du client",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Documents récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "documents": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ClientDocument"
+                                                    }
+                                                },
+                                                "statistics": {
+                                                    "properties": {
+                                                        "total_documents": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total_size": {
+                                                            "type": "integer",
+                                                            "example": 52428800
+                                                        },
+                                                        "formatted_total_size": {
+                                                            "type": "string",
+                                                            "example": "50 MB"
+                                                        },
+                                                        "by_category": {
+                                                            "properties": {
+                                                                "contrat": {
+                                                                    "type": "integer",
+                                                                    "example": 5
+                                                                },
+                                                                "devis": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                },
+                                                                "facture": {
+                                                                    "type": "integer",
+                                                                    "example": 4
+                                                                },
+                                                                "autre": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Uploader un document pour un client",
+                "operationId": "40a9a38586c3ee5c3ba998cf935bc8ad",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "description": "Fichier à uploader",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "title": {
+                                        "description": "Titre du document",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description du document",
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "description": "Catégorie du document",
+                                        "type": "string",
+                                        "enum": [
+                                            "contrat",
+                                            "devis",
+                                            "facture",
+                                            "autre"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Document uploadé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document uploadé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClientDocument"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/documents/{document}": {
+            "get": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Afficher les détails d'un document client",
+                "operationId": "a8486446709531ab446cd129f623f5a7",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document trouvé"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClientDocument"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Mettre à jour les métadonnées d'un document client",
+                "operationId": "a0406823bed5ee2d69d881bba6f95428",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Titre du document",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description du document",
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "description": "Catégorie du document",
+                                        "type": "string",
+                                        "enum": [
+                                            "contrat",
+                                            "devis",
+                                            "facture",
+                                            "autre"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document mis à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClientDocument"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Supprimer un document client",
+                "operationId": "3cda0446005150880c4a980f41dd22f4",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document supprimé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/documents/{document}/download": {
+            "get": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Télécharger un document client",
+                "operationId": "64e031371616e01f256c8bf912bbaf4d",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fichier à télécharger",
+                        "content": {
+                            "application/octet-stream": {}
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/documents/{document}/preview": {
+            "get": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Prévisualiser un document client",
+                "operationId": "67455557375698225543e42e09c9043a",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Aperçu du fichier",
+                        "content": {
+                            "application/pdf": {}
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/documents/{document}/versions": {
+            "get": {
+                "tags": [
+                    "Client Documents"
+                ],
+                "summary": "Lister les versions d'un document client",
+                "operationId": "face83f536128718c07a60fdbd1092ce",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Versions du document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Versions récupérées avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ClientDocument"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -2579,6 +3303,519 @@
                 ]
             }
         },
+        "/api/v1/dashboard/commercial/overview": {
+            "get": {
+                "tags": [
+                    "Commercial Dashboard"
+                ],
+                "summary": "Get commercial dashboard overview",
+                "description": "Returns key metrics for commercial dashboard including total clients, prospects, and monthly stats",
+                "operationId": "getCommercialOverview",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for analysis (month, quarter, year, custom)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "month",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year",
+                                "custom"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for custom period (Y-m-d format)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for custom period (Y-m-d format)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commercial dashboard overview data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard overview retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "metrics": {
+                                                    "properties": {
+                                                        "total_active_clients": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        },
+                                                        "total_prospects": {
+                                                            "type": "integer",
+                                                            "example": 45
+                                                        },
+                                                        "new_clients_this_period": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "total_suppliers": {
+                                                            "type": "integer",
+                                                            "example": 25
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "period_info": {
+                                                    "properties": {
+                                                        "period": {
+                                                            "type": "string",
+                                                            "example": "month"
+                                                        },
+                                                        "start_date": {
+                                                            "type": "string",
+                                                            "example": "2026-01-01"
+                                                        },
+                                                        "end_date": {
+                                                            "type": "string",
+                                                            "example": "2026-01-31"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/commercial/stats": {
+            "get": {
+                "tags": [
+                    "Commercial Dashboard"
+                ],
+                "summary": "Get detailed commercial statistics",
+                "description": "Returns detailed statistics including client distribution by status, category, and sector",
+                "operationId": "getCommercialStats",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for analysis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "month",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year",
+                                "custom"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed commercial statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Commercial stats retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "clients_by_status": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "active"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "example": 120
+                                                            },
+                                                            "percentage": {
+                                                                "type": "number",
+                                                                "example": 80.5
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "clients_by_type": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "entreprise"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "example": 85
+                                                            },
+                                                            "percentage": {
+                                                                "type": "number",
+                                                                "example": 60.7000000000000028421709430404007434844970703125
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "clients_by_sector": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "sector": {
+                                                                "type": "string",
+                                                                "example": "Technology"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "example": 25
+                                                            },
+                                                            "percentage": {
+                                                                "type": "number",
+                                                                "example": 17.800000000000000710542735760100185871124267578125
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/commercial/clients-evolution": {
+            "get": {
+                "tags": [
+                    "Commercial Dashboard"
+                ],
+                "summary": "Get client evolution over time",
+                "description": "Returns client count evolution data for charts and graphs",
+                "operationId": "getClientsEvolution",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for evolution analysis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "month",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client evolution data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client evolution data retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "evolution_data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "example": "2026-01-01"
+                                                            },
+                                                            "total_clients": {
+                                                                "type": "integer",
+                                                                "example": 145
+                                                            },
+                                                            "new_clients": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "active_clients": {
+                                                                "type": "integer",
+                                                                "example": 140
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/commercial/interactions/recent": {
+            "get": {
+                "tags": [
+                    "Commercial Dashboard"
+                ],
+                "summary": "Get recent interactions",
+                "description": "Returns recent interactions across all clients including calls, appointments, and notes",
+                "operationId": "getRecentInteractions",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of interactions to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recent interactions data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recent interactions retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "interactions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "call"
+                                                            },
+                                                            "client_name": {
+                                                                "type": "string",
+                                                                "example": "Entreprise ACME"
+                                                            },
+                                                            "subject": {
+                                                                "type": "string",
+                                                                "example": "Follow-up call"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2026-01-26T10:30:00Z"
+                                                            },
+                                                            "created_by": {
+                                                                "type": "string",
+                                                                "example": "John Doe"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/commercial/clients/inactive": {
+            "get": {
+                "tags": [
+                    "Commercial Dashboard"
+                ],
+                "summary": "Get clients without recent interactions",
+                "description": "Returns clients who haven't had any interactions for a specified number of days",
+                "operationId": "getInactiveClients",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Number of days without interaction",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 30
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of clients to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inactive clients data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Inactive clients retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "clients": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "client_id": {
+                                                                "type": "string",
+                                                                "example": "CLI-E76E2DC4GQ"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Entreprise ACME"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "contact@acme.com"
+                                                            },
+                                                            "last_interaction_date": {
+                                                                "type": "string",
+                                                                "example": "2025-12-15T14:30:00Z"
+                                                            },
+                                                            "days_since_interaction": {
+                                                                "type": "integer",
+                                                                "example": 42
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total_inactive": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "days_threshold": {
+                                                    "type": "integer",
+                                                    "example": 30
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{clientId}/contacts": {
             "get": {
                 "tags": [
@@ -3196,6 +4433,1210 @@
                 ]
             }
         },
+        "/v1/users/{user}/email-preferences": {
+            "get": {
+                "tags": [
+                    "Email Notification Preferences"
+                ],
+                "summary": "Obtenir les préférences email d'un utilisateur",
+                "operationId": "492c83f40d5f70307a093d1ff36e9675",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Préférences email récupérées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email preferences retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "appointment_reminder": {
+                                                    "properties": {
+                                                        "timing": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "integer"
+                                                            },
+                                                            "example": [
+                                                                60,
+                                                                1440
+                                                            ]
+                                                        },
+                                                        "email_enabled": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Email Notification Preferences"
+                ],
+                "summary": "Mettre à jour les préférences email",
+                "operationId": "0a6ff3a79bfe5c8b9f5af82f1f2cd4eb",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "appointment_reminder": {
+                                        "properties": {
+                                            "timing": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "integer"
+                                                },
+                                                "example": [
+                                                    15,
+                                                    60,
+                                                    1440
+                                                ]
+                                            },
+                                            "email_enabled": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Préférences mises à jour avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/email-reminders/pending": {
+            "get": {
+                "tags": [
+                    "Email Notification Preferences"
+                ],
+                "summary": "Obtenir les rappels email en attente",
+                "operationId": "e9e6a04355518eaa33c0704c435eb841",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rappels en attente récupérés"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/email-reminders/sent": {
+            "get": {
+                "tags": [
+                    "Email Notification Preferences"
+                ],
+                "summary": "Obtenir l'historique des rappels envoyés",
+                "operationId": "670b92a2cde46eee355fd3e1c5cf0fc1",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Nombre de jours d'historique",
+                        "schema": {
+                            "type": "integer",
+                            "default": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historique des rappels envoyés"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/email-reminders/statistics": {
+            "get": {
+                "tags": [
+                    "Email Notification Preferences"
+                ],
+                "summary": "Obtenir les statistiques des rappels email",
+                "operationId": "3b05bec21fc08285cf7bc05863d593a6",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Période en jours pour les statistiques",
+                        "schema": {
+                            "type": "integer",
+                            "default": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques des rappels email"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/permissions": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Lister toutes les permissions disponibles",
+                "operationId": "c8e60e1cdfb99866cdca9b2d3737f847",
+                "parameters": [
+                    {
+                        "name": "module",
+                        "in": "query",
+                        "description": "Filtrer par module",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "description": "Filtrer par action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "description": "Filtrer par scope",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "grouped",
+                        "in": "query",
+                        "description": "Grouper les permissions par module",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permissions récupérées avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/permissions/modules": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Lister les modules du système",
+                "operationId": "b18024c02d890a4b53287e31862bbb42",
+                "responses": {
+                    "200": {
+                        "description": "Modules récupérés avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/permissions/check": {
+            "post": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Vérifier une permission spécifique",
+                "operationId": "143e1fb0cb8268d40a202c0fa68a3cd7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "example": "read"
+                                    },
+                                    "resource": {
+                                        "type": "string",
+                                        "example": "clients"
+                                    },
+                                    "scope": {
+                                        "type": "string",
+                                        "example": "own"
+                                    },
+                                    "resource_id": {
+                                        "type": "integer",
+                                        "example": 123
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permission vérifiée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/me/permissions": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Permissions de l'utilisateur connecté",
+                "operationId": "5d31864345b57771e8c135e3f7d19c0c",
+                "parameters": [
+                    {
+                        "name": "grouped",
+                        "in": "query",
+                        "description": "Grouper les permissions par module",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permissions utilisateur récupérées avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/permissions/{id}": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Détails d'une permission spécifique",
+                "operationId": "009c45197ac62845b07dead117dca29b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permission récupérée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/permissions/user/{user_id}": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Permissions d'un utilisateur spécifique",
+                "operationId": "de33ab0ed17841e24fc15796d0f90767",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "grouped",
+                        "in": "query",
+                        "description": "Grouper les permissions par module",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permissions utilisateur récupérées avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/permissions/bulk-check": {
+            "post": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Vérification en lot de permissions",
+                "operationId": "71c91870e35307d42c5706287e940980",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "action": {
+                                                    "type": "string"
+                                                },
+                                                "resource": {
+                                                    "type": "string"
+                                                },
+                                                "scope": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permissions vérifiées avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/personal/overview": {
+            "get": {
+                "tags": [
+                    "Personal Dashboard"
+                ],
+                "summary": "Get personal dashboard overview",
+                "description": "Returns personal metrics for the authenticated user including their clients, appointments, and tasks",
+                "operationId": "getPersonalOverview",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for analysis (month, quarter, year, custom)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "month",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year",
+                                "custom"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for custom period (Y-m-d format)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for custom period (Y-m-d format)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personal dashboard overview data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Personal dashboard overview retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "metrics": {
+                                                    "properties": {
+                                                        "my_active_clients": {
+                                                            "type": "integer",
+                                                            "example": 25
+                                                        },
+                                                        "my_prospects": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "my_appointments_upcoming": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "my_overdue_tasks": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "my_interactions_this_period": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "period_info": {
+                                                    "properties": {
+                                                        "period": {
+                                                            "type": "string",
+                                                            "example": "month"
+                                                        },
+                                                        "start_date": {
+                                                            "type": "string",
+                                                            "example": "2026-01-01"
+                                                        },
+                                                        "end_date": {
+                                                            "type": "string",
+                                                            "example": "2026-01-31"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/personal/portfolio": {
+            "get": {
+                "tags": [
+                    "Personal Dashboard"
+                ],
+                "summary": "Get personal portfolio statistics",
+                "description": "Returns portfolio evolution and performance metrics for the authenticated user",
+                "operationId": "getPersonalPortfolio",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for portfolio analysis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "month",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personal portfolio data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Portfolio data retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "portfolio_evolution": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "example": "2026-01-01"
+                                                            },
+                                                            "clients_count": {
+                                                                "type": "integer",
+                                                                "example": 20
+                                                            },
+                                                            "new_clients": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "interactions_count": {
+                                                                "type": "integer",
+                                                                "example": 15
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "performance_metrics": {
+                                                    "properties": {
+                                                        "avg_interactions_per_client": {
+                                                            "type": "number",
+                                                            "example": 2.5
+                                                        },
+                                                        "most_active_day": {
+                                                            "type": "string",
+                                                            "example": "Tuesday"
+                                                        },
+                                                        "conversion_rate": {
+                                                            "type": "number",
+                                                            "example": 15.5
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/personal/tasks/today": {
+            "get": {
+                "tags": [
+                    "Personal Dashboard"
+                ],
+                "summary": "Get today's tasks and appointments",
+                "description": "Returns tasks, appointments and follow-ups for today for the authenticated user",
+                "operationId": "getTodaysTasks",
+                "responses": {
+                    "200": {
+                        "description": "Today's tasks and appointments",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Today's tasks retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "appointments_today": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "client_name": {
+                                                                "type": "string",
+                                                                "example": "Entreprise ACME"
+                                                            },
+                                                            "subject": {
+                                                                "type": "string",
+                                                                "example": "Product demo"
+                                                            },
+                                                            "scheduled_date": {
+                                                                "type": "string",
+                                                                "example": "2026-01-26T14:00:00Z"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "scheduled"
+                                                            },
+                                                            "priority": {
+                                                                "type": "string",
+                                                                "example": "high"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "follow_ups_due": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "client_name": {
+                                                                "type": "string",
+                                                                "example": "Tech Solutions"
+                                                            },
+                                                            "subject": {
+                                                                "type": "string",
+                                                                "example": "Follow up on proposal"
+                                                            },
+                                                            "follow_up_date": {
+                                                                "type": "string",
+                                                                "example": "2026-01-26T09:00:00Z"
+                                                            },
+                                                            "days_overdue": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "summary": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/personal/appointments/upcoming": {
+            "get": {
+                "tags": [
+                    "Personal Dashboard"
+                ],
+                "summary": "Get upcoming appointments",
+                "description": "Returns upcoming appointments for the authenticated user within the next specified days",
+                "operationId": "getUpcomingAppointments",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Number of days to look ahead",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 7,
+                            "maximum": 30
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of appointments to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upcoming appointments",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Upcoming appointments retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "appointments": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "client_name": {
+                                                                "type": "string",
+                                                                "example": "Entreprise ACME"
+                                                            },
+                                                            "subject": {
+                                                                "type": "string",
+                                                                "example": "Product demo"
+                                                            },
+                                                            "scheduled_date": {
+                                                                "type": "string",
+                                                                "example": "2026-01-28T14:00:00Z"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "scheduled"
+                                                            },
+                                                            "days_until": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total_upcoming": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/personal/interactions/recent": {
+            "get": {
+                "tags": [
+                    "Personal Dashboard"
+                ],
+                "summary": "Get recent personal interactions",
+                "description": "Returns recent interactions created by the authenticated user",
+                "operationId": "getPersonalRecentInteractions",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of interactions to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recent personal interactions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recent interactions retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "interactions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "call"
+                                                            },
+                                                            "client_name": {
+                                                                "type": "string",
+                                                                "example": "Entreprise ACME"
+                                                            },
+                                                            "subject": {
+                                                                "type": "string",
+                                                                "example": "Follow-up call"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2026-01-26T10:30:00Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/roles": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Lister tous les rôles",
+                "operationId": "c1294bb85dfc016a8f9c0d3f0907293f",
+                "parameters": [
+                    {
+                        "name": "include_permissions",
+                        "in": "query",
+                        "description": "Inclure les permissions des rôles",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "description": "Filtrer par type (predefined, custom, all)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "predefined",
+                                "custom",
+                                "all"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des rôles récupérée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Créer un nouveau rôle personnalisé",
+                "operationId": "c7f58f49125e9b60da0f0db6890a4f22",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "custom_manager"
+                                    },
+                                    "display_name": {
+                                        "type": "string",
+                                        "example": "Gestionnaire personnalisé"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Rôle de gestionnaire avec permissions spécifiques"
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rôle créé avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Détails d'un rôle spécifique",
+                "operationId": "9004c1b664a5ad189ceea42fb66f4adc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du rôle récupérés avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Modifier un rôle",
+                "operationId": "b3bbedf26c1519fed8b75569959e525c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "display_name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rôle modifié avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Supprimer un rôle personnalisé",
+                "operationId": "6bc525095ab83caa6eff5e63447cf7f5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rôle supprimé avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/suppliers": {
             "get": {
                 "tags": [
@@ -3440,6 +5881,144 @@
                 ]
             }
         },
+        "/v1/suppliers/search": {
+            "get": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Quick search suppliers",
+                "description": "Search suppliers for autocomplete functionality",
+                "operationId": "f03bd70f0eeb0c6ddce5ca77eb93580b",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search term (minimum 2 characters)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of results",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "fuzzy",
+                        "in": "query",
+                        "description": "Enable fuzzy search for typos",
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Résultats de recherche"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "results": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "supplier_id": {
+                                                                "type": "string",
+                                                                "example": "FOUR-ABC123XY"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Fournisseur ACME"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "contact@acme-supplier.com"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "entreprise"
+                                                            },
+                                                            "highlighted_field": {
+                                                                "type": "string",
+                                                                "example": "name"
+                                                            },
+                                                            "match_score": {
+                                                                "type": "number",
+                                                                "example": 0.9499999999999999555910790149937383830547332763671875
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "query": {
+                                                    "type": "string",
+                                                    "example": "acme"
+                                                },
+                                                "total_found": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Search term too short",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le terme de recherche doit contenir au moins 2 caractères"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/suppliers/{id}": {
             "get": {
                 "tags": [
@@ -3669,9 +6248,1435 @@
                     }
                 ]
             }
+        },
+        "/api/v1/suppliers/{supplier}/documents": {
+            "get": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Lister les documents d'un supplier",
+                "operationId": "a265f67cb9aee1553b32958203148554",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Filtrer par catégorie",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "contrat",
+                                "devis",
+                                "facture",
+                                "autre"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Trier par",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "date",
+                                "type",
+                                "category",
+                                "size"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des documents du supplier",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Documents récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "documents": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/SupplierDocument"
+                                                    }
+                                                },
+                                                "statistics": {
+                                                    "properties": {
+                                                        "total_documents": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total_size": {
+                                                            "type": "integer",
+                                                            "example": 52428800
+                                                        },
+                                                        "formatted_total_size": {
+                                                            "type": "string",
+                                                            "example": "50 MB"
+                                                        },
+                                                        "by_category": {
+                                                            "properties": {
+                                                                "contrat": {
+                                                                    "type": "integer",
+                                                                    "example": 5
+                                                                },
+                                                                "devis": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                },
+                                                                "facture": {
+                                                                    "type": "integer",
+                                                                    "example": 4
+                                                                },
+                                                                "autre": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Uploader un document pour un supplier",
+                "operationId": "6cd9eea1ab829eff6448cb050e49c9c6",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "description": "Fichier à uploader",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "title": {
+                                        "description": "Titre du document",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description du document",
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "description": "Catégorie du document",
+                                        "type": "string",
+                                        "enum": [
+                                            "contrat",
+                                            "devis",
+                                            "facture",
+                                            "autre"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Document uploadé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document uploadé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SupplierDocument"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/suppliers/{supplier}/documents/{document}": {
+            "get": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Afficher les détails d'un document supplier",
+                "operationId": "0d54c4ec594dca58a6e83cb365b5329c",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document trouvé"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SupplierDocument"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Mettre à jour les métadonnées d'un document supplier",
+                "operationId": "1ab3922b623045ba0f28032c0604602f",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Titre du document",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description du document",
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "description": "Catégorie du document",
+                                        "type": "string",
+                                        "enum": [
+                                            "contrat",
+                                            "devis",
+                                            "facture",
+                                            "autre"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document mis à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SupplierDocument"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Supprimer un document supplier",
+                "operationId": "2acf024f5bbd8c8600b1515edd60e94a",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document supprimé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/suppliers/{supplier}/documents/{document}/download": {
+            "get": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Télécharger un document supplier",
+                "operationId": "8fd5b457c8e356b07ae7f71d2585327c",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fichier à télécharger",
+                        "content": {
+                            "application/octet-stream": {}
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/suppliers/{supplier}/documents/{document}/preview": {
+            "get": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Prévisualiser un document supplier",
+                "operationId": "ebcfa75b3674b6871f76da1fd9752ea1",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Aperçu du fichier",
+                        "content": {
+                            "application/pdf": {}
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/suppliers/{supplier}/documents/{document}/versions": {
+            "get": {
+                "tags": [
+                    "Supplier Documents"
+                ],
+                "summary": "Lister les versions d'un document supplier",
+                "operationId": "ee52c2f180860698db729dd0880da2d8",
+                "parameters": [
+                    {
+                        "name": "supplier",
+                        "in": "path",
+                        "description": "ID du supplier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "ID du document",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Versions du document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Versions récupérées avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SupplierDocument"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get all users",
+                "description": "Retrieve all users with pagination and filtering",
+                "operationId": "561772d7712651042ff7dbf6e41d9fe9",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "description": "Filter by role name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create new user",
+                "description": "Create a new user",
+                "operationId": "361db648c47db96160f91f8d2b2c986d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "first_name",
+                                    "last_name",
+                                    "password",
+                                    "role_id"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    },
+                                    "role_id": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "inactive"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "department": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users/{id}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user by ID",
+                "description": "Retrieve a specific user by ID",
+                "operationId": "e045e3d3795a1f85290994f44aa801fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "description": "Update an existing user",
+                "operationId": "3e2ffa4792954e0893c0e22e9e87f03b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "role_id": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "inactive"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "department": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "description": "Delete a user",
+                "operationId": "b4928d8cd30646a17134307eacc64518",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users/{id}/toggle-status": {
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Toggle user status",
+                "description": "Activate or deactivate a user",
+                "operationId": "690f659a318b78d7f7083f7ad335210f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User status updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users/{id}/reset-password": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Reset user password",
+                "description": "Reset user password",
+                "operationId": "17a45d5e2e538fabfa67e43a306bbbcc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users/search": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Search users",
+                "description": "Search users by name or email",
+                "operationId": "2d31bb4d712efc1e050c2d37d91e4a05",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search term",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users/validate-email": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Validate email uniqueness",
+                "description": "Check if email is unique",
+                "operationId": "d39e9c523df952721b2aab81c205e899",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "email"
+                        }
+                    },
+                    {
+                        "name": "exclude",
+                        "in": "query",
+                        "description": "User ID to exclude from check",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation result"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/v1/users/stats": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get users statistics",
+                "description": "Get statistics about users",
+                "operationId": "ae648898f912632bdf6000c42cc2253c",
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}/roles": {
+            "get": {
+                "tags": [
+                    "User Roles"
+                ],
+                "summary": "Rôles d'un utilisateur",
+                "operationId": "0cb544dda22d0a872f68b2d63f2a1252",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "include_inactive",
+                        "in": "query",
+                        "description": "Inclure les rôles inactifs",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rôles utilisateur récupérés avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "User Roles"
+                ],
+                "summary": "Assigner un rôle à un utilisateur",
+                "operationId": "37e4eb51f9192aa394160d9383b000ff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "role_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "effective_until": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rôle assigné avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}/roles/{role_id}": {
+            "put": {
+                "tags": [
+                    "User Roles"
+                ],
+                "summary": "Modifier l'assignation d'un rôle",
+                "operationId": "ad6aa09806a50fd440e0e83e54b1fe23",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "role_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "effective_until": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Assignation de rôle modifiée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "User Roles"
+                ],
+                "summary": "Retirer un rôle d'un utilisateur",
+                "operationId": "67acb8052393792152231e85e6deca90",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "role_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rôle retiré avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}/roles/bulk-assign": {
+            "post": {
+                "tags": [
+                    "User Roles"
+                ],
+                "summary": "Assigner plusieurs rôles à un utilisateur",
+                "operationId": "390aa1da168cb138bf8bdeeca26131de",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "role_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "effective_until": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rôles assignés avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}/roles/bulk-remove": {
+            "post": {
+                "tags": [
+                    "User Roles"
+                ],
+                "summary": "Retirer plusieurs rôles d'un utilisateur",
+                "operationId": "613e54ee215508995036ea8fd13d8cd1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "role_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rôles retirés avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
+        "schemas": {
+            "ClientDocument": {
+                "title": "Document Client",
+                "description": "Document attaché à un client",
+                "properties": {
+                    "id": {
+                        "description": "ID du document",
+                        "type": "integer"
+                    },
+                    "client_id": {
+                        "description": "ID du client",
+                        "type": "integer"
+                    },
+                    "title": {
+                        "description": "Titre du document",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "description": "Description du document",
+                        "type": "string"
+                    },
+                    "category": {
+                        "description": "Catégorie du document",
+                        "type": "string",
+                        "enum": [
+                            "contrat",
+                            "devis",
+                            "facture",
+                            "autre"
+                        ]
+                    },
+                    "original_name": {
+                        "description": "Nom original du fichier",
+                        "type": "string"
+                    },
+                    "mime_type": {
+                        "description": "Type MIME du fichier",
+                        "type": "string"
+                    },
+                    "file_size": {
+                        "description": "Taille du fichier en bytes",
+                        "type": "integer"
+                    },
+                    "file_extension": {
+                        "description": "Extension du fichier",
+                        "type": "string"
+                    },
+                    "version": {
+                        "description": "Version du document",
+                        "type": "integer"
+                    },
+                    "document_key": {
+                        "description": "Clé de regroupement des versions",
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "description": "Document actif",
+                        "type": "boolean"
+                    },
+                    "uploaded_by": {
+                        "description": "ID de l'utilisateur qui a uploadé",
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Date de modification",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "last_accessed_at": {
+                        "description": "Dernier accès",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierDocument": {
+                "title": "Document Fournisseur",
+                "description": "Document attaché à un fournisseur",
+                "properties": {
+                    "id": {
+                        "description": "ID du document",
+                        "type": "integer"
+                    },
+                    "supplier_id": {
+                        "description": "ID du fournisseur",
+                        "type": "integer"
+                    },
+                    "title": {
+                        "description": "Titre du document",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "description": "Description du document",
+                        "type": "string"
+                    },
+                    "category": {
+                        "description": "Catégorie du document",
+                        "type": "string",
+                        "enum": [
+                            "contrat",
+                            "devis",
+                            "facture",
+                            "autre"
+                        ]
+                    },
+                    "original_name": {
+                        "description": "Nom original du fichier",
+                        "type": "string"
+                    },
+                    "mime_type": {
+                        "description": "Type MIME du fichier",
+                        "type": "string"
+                    },
+                    "file_size": {
+                        "description": "Taille du fichier en bytes",
+                        "type": "integer"
+                    },
+                    "file_extension": {
+                        "description": "Extension du fichier",
+                        "type": "string"
+                    },
+                    "version": {
+                        "description": "Version du document",
+                        "type": "integer"
+                    },
+                    "document_key": {
+                        "description": "Clé de regroupement des versions",
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "description": "Document actif",
+                        "type": "boolean"
+                    },
+                    "uploaded_by": {
+                        "description": "ID de l'utilisateur qui a uploadé",
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Date de modification",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "last_accessed_at": {
+                        "description": "Dernier accès",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "sanctum": {
                 "type": "http",
@@ -3695,12 +7700,44 @@
             "description": "Gestion des catégories pour la segmentation des clients"
         },
         {
+            "name": "Client Documents",
+            "description": "API pour la gestion des documents clients"
+        },
+        {
             "name": "Client Notes",
             "description": "Gestion des notes client"
         },
         {
             "name": "Client Timeline",
             "description": "Historique unifié des interactions client"
+        },
+        {
+            "name": "Commercial Dashboard",
+            "description": "API endpoints for commercial dashboard analytics and metrics"
+        },
+        {
+            "name": "Email Notification Preferences",
+            "description": "API pour la gestion des préférences de notifications email"
+        },
+        {
+            "name": "Permissions",
+            "description": "API pour la gestion des permissions"
+        },
+        {
+            "name": "Personal Dashboard",
+            "description": "API endpoints for personal dashboard for individual users"
+        },
+        {
+            "name": "Roles",
+            "description": "API pour la gestion des rôles"
+        },
+        {
+            "name": "Supplier Documents",
+            "description": "API pour la gestion des documents suppliers"
+        },
+        {
+            "name": "User Roles",
+            "description": "API pour la gestion des rôles utilisateur"
         },
         {
             "name": "System",
@@ -3729,6 +7766,10 @@
         {
             "name": "Suppliers",
             "description": "Suppliers"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
         }
     ]
 }

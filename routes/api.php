@@ -216,7 +216,16 @@ Route::prefix('v1')->group(function () {
         Route::get('email-reminders/statistics', [EmailNotificationPreferenceController::class, 'getStatistics']);
 
         // Calls routes (US-CC-001)
-        Route::post('/calls', [App\Http\Controllers\Api\V1\CallController::class, 'store']);
+        Route::prefix('call-center')->group(function () {
+            Route::post('/calls', [App\Http\Controllers\Api\V1\CallController::class, 'store']);
+            Route::get('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'show']);
+            Route::put('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'update']);
+            Route::put('/calls/{id}/status', [App\Http\Controllers\Api\V1\CallController::class, 'changeStatus']);
+
+            // Call Notes
+            Route::post('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'store']);
+            Route::get('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'index']);
+        });
     });
 });
 

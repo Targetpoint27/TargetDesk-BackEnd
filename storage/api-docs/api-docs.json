@@ -836,14 +836,14 @@
                 ]
             }
         },
-        "/api/v1/calls": {
+        "/api/v1/call-center/calls": {
             "post": {
                 "tags": [
                     "Calls"
                 ],
                 "summary": "Créer un appel (entrant ou sortant)",
                 "description": "Enregistre un nouvel appel entrant ou sortant avec génération automatique d'un identifiant unique",
-                "operationId": "8d05ca9ade06638d07dd4846e5486214",
+                "operationId": "81f4ef1f60932c3f9a36276f16020735",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1180,6 +1180,314 @@
                 ]
             }
         },
+        "/api/v1/call-center/calls/{id}": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Consulter les détails d'un appel",
+                "description": "Récupère toutes les informations détaillées d'un appel spécifique",
+                "operationId": "744ccb9a333a2b9f49a84cdd01608b6c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'appel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de l'appel récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Appel trouvé"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "call_id": {
+                                                    "type": "string",
+                                                    "example": "CALL-2026-0001"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "entrant"
+                                                },
+                                                "phone_number": {
+                                                    "type": "string",
+                                                    "example": "0612345678"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "a_traiter"
+                                                },
+                                                "urgency": {
+                                                    "type": "string",
+                                                    "example": "urgent"
+                                                },
+                                                "time_elapsed": {
+                                                    "type": "string",
+                                                    "example": "Il y a 2 heures"
+                                                },
+                                                "department": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "notes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "note": {
+                                                                "type": "string"
+                                                            },
+                                                            "is_important": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Appel non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Appel non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Modifier un appel",
+                "description": "Met à jour les informations d'un appel existant",
+                "operationId": "1ff0ee6c7b5e0845de10f9115917cba9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'appel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "0623456789"
+                                    },
+                                    "caller_name": {
+                                        "type": "string",
+                                        "example": "Jean Dupont Modifié"
+                                    },
+                                    "object": {
+                                        "type": "string",
+                                        "example": "Problème résolu"
+                                    },
+                                    "summary": {
+                                        "type": "string",
+                                        "example": "Le problème a été corrigé"
+                                    },
+                                    "urgency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "normal",
+                                            "urgent",
+                                            "critique"
+                                        ],
+                                        "example": "normal"
+                                    },
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "assigned_to": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Appel mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Appel mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Appel non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/{id}/status": {
+            "put": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Changer le statut d'un appel",
+                "description": "Met à jour le statut d'un appel et enregistre l'historique",
+                "operationId": "7b046287d4c5f10f91380f5c09c770d9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'appel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "a_traiter",
+                                            "en_cours",
+                                            "en_attente",
+                                            "a_rappeler",
+                                            "resolu",
+                                            "cloture",
+                                            "annule"
+                                        ],
+                                        "example": "en_cours"
+                                    },
+                                    "comment": {
+                                        "description": "Commentaire optionnel",
+                                        "type": "string",
+                                        "example": "Agent commence le traitement"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statut changé avec succès"
+                    },
+                    "404": {
+                        "description": "Appel non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{client}/calls": {
             "get": {
                 "tags": [
@@ -1444,6 +1752,206 @@
                 "responses": {
                     "200": {
                         "description": "Suivi terminé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/{id}/notes": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Lister les notes d'un appel",
+                "description": "Récupère toutes les notes d'un appel dans l'ordre chronologique",
+                "operationId": "9d0e09de1e7c0abb5fa54045b15c78ca",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'appel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des notes récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notes récupérées avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "note": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_important": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "creator": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Appel non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Ajouter une note à un appel",
+                "description": "Crée une nouvelle note pour un appel spécifique",
+                "operationId": "22a2af79f4f826af9651a2ba0aab355c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'appel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "note"
+                                ],
+                                "properties": {
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Client a demandé un rappel demain matin à 10h"
+                                    },
+                                    "is_important": {
+                                        "description": "Marquer comme importante (optionnel)",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Note créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Note ajoutée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "call_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "note": {
+                                                    "type": "string",
+                                                    "example": "Client a demandé un rappel demain matin à 10h"
+                                                },
+                                                "is_important": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_by": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "creator": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Appel non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
                     }
                 },
                 "security": [

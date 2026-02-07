@@ -1764,6 +1764,187 @@
                 ]
             }
         },
+        "/api/v1/call-center/calls/my-queue": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Consulter ma file d'appels",
+                "description": "Récupère tous les appels assignés à l'agent connecté avec statut 'à traiter' ou 'en cours'",
+                "operationId": "50ee07ab191668d0dc10c324fb3d77f9",
+                "responses": {
+                    "200": {
+                        "description": "File personnelle récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "File personnelle récupérée"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "urgent_count": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "calls": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/department-queue": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Consulter la file du département",
+                "description": "Récupère tous les appels du département de l'agent connecté",
+                "operationId": "5359947d852d854d2819b3894d985a79",
+                "responses": {
+                    "200": {
+                        "description": "File du département récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "File du département récupérée"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "unassigned_count": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "my_calls_count": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "others_calls_count": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "calls": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Agent non assigné à un département"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/{id}/assign-to-me": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "S'auto-assigner un appel",
+                "description": "Assigne un appel non assigné à l'agent connecté et change le statut en 'en_cours'",
+                "operationId": "9f7396367e076ee2a395af2c0d1cae66",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'appel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Appel assigné avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Appel assigné avec succès"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Appel non trouvé"
+                    },
+                    "400": {
+                        "description": "Appel déjà assigné"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{client}/calls": {
             "get": {
                 "tags": [

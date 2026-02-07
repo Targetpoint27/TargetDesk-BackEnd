@@ -838,4 +838,257 @@ class CallController extends BaseApiController
             );
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/call-center/calls/my-queue",
+     *     summary="Consulter ma file d'appels",
+     *     description="Récupère tous les appels assignés à l'agent connecté avec statut 'à traiter' ou 'en cours'",
+     *     tags={"Calls"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="File personnelle récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="File personnelle récupérée"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer", example=5),
+     *                 @OA\Property(property="urgent_count", type="integer", example=2),
+     *                 @OA\Property(property="calls", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function myQueue(Request $request)
+    {
+        try {
+            $calls = Call::where('assigned_to', Auth::id())
+                        ->whereIn('status', ['a_traiter', 'en_cours'])
+                        ->with(['department', 'client', 'contact', 'creator'])
+                        ->orderByRaw("FIELD(urgency, 'critique', 'urgent', 'normal')")
+                        ->orderBy('created_at', 'asc')
+                        ->get();
+
+            $urgentCount = $calls->whereIn('urgency', ['urgent', 'critique'])->count();
+
+            $callsWithTimeElapsed = $calls->map(function ($call) {
+                $callArray = $call->toArray();
+                $callArray['time_elapsed'] = $this->calculateTimeElapsed($call->created_at);
+                return $callArray;
+            });
+
+            $response = [
+                'total' => $calls->count(),
+                'urgent_count' => $urgentCount,
+                'calls' => $callsWithTimeElapsed,
+            ];
+
+            Log::info('File personnelle consultée', [
+                'agent_id' => Auth::id(),
+                'total_calls' => $calls->count(),
+                'urgent_calls' => $urgentCount,
+            ]);
+
+            return $this->successResponse(
+                $response,
+                'File personnelle récupérée',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération de la file personnelle', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Erreur lors de la récupération de la file personnelle',
+                500
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/call-center/calls/department-queue",
+     *     summary="Consulter la file du département",
+     *     description="Récupère tous les appels du département de l'agent connecté",
+     *     tags={"Calls"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="File du département récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="File du département récupérée"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer", example=10),
+     *                 @OA\Property(property="unassigned_count", type="integer", example=3),
+     *                 @OA\Property(property="my_calls_count", type="integer", example=2),
+     *                 @OA\Property(property="others_calls_count", type="integer", example=5),
+     *                 @OA\Property(property="calls", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Agent non assigné à un département"
+     *     )
+     * )
+     */
+    public function departmentQueue(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->department_id) {
+                return $this->errorResponse(
+                    'Vous n\'êtes pas assigné à un département',
+                    404
+                );
+            }
+
+            $calls = Call::where('department_id', $user->department_id)
+                        ->whereIn('status', ['a_traiter', 'en_cours'])
+                        ->with(['department', 'client', 'contact', 'assignedAgent', 'creator'])
+                        ->orderByRaw("FIELD(urgency, 'critique', 'urgent', 'normal')")
+                        ->orderBy('created_at', 'asc')
+                        ->get();
+
+            $unassignedCount = $calls->where('assigned_to', null)->count();
+            $myCallsCount = $calls->where('assigned_to', $user->id)->count();
+            $othersCallsCount = $calls->where('assigned_to', '!=', null)
+                                    ->where('assigned_to', '!=', $user->id)
+                                    ->count();
+
+            $callsWithTimeElapsed = $calls->map(function ($call) use ($user) {
+                $callArray = $call->toArray();
+                $callArray['time_elapsed'] = $this->calculateTimeElapsed($call->created_at);
+                $callArray['is_mine'] = $call->assigned_to === $user->id;
+                $callArray['is_unassigned'] = $call->assigned_to === null;
+                return $callArray;
+            });
+
+            $response = [
+                'total' => $calls->count(),
+                'unassigned_count' => $unassignedCount,
+                'my_calls_count' => $myCallsCount,
+                'others_calls_count' => $othersCallsCount,
+                'calls' => $callsWithTimeElapsed,
+            ];
+
+            Log::info('File du département consultée', [
+                'agent_id' => $user->id,
+                'department_id' => $user->department_id,
+                'total_calls' => $calls->count(),
+                'unassigned' => $unassignedCount,
+            ]);
+
+            return $this->successResponse(
+                $response,
+                'File du département récupérée',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération de la file du département', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Erreur lors de la récupération de la file du département',
+                500
+            );
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/call-center/calls/{id}/assign-to-me",
+     *     summary="S'auto-assigner un appel",
+     *     description="Assigne un appel non assigné à l'agent connecté et change le statut en 'en_cours'",
+     *     tags={"Calls"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID de l'appel",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Appel assigné avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Appel assigné avec succès"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Appel non trouvé"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Appel déjà assigné"
+     *     )
+     * )
+     */
+    public function assignToMe($id)
+    {
+        try {
+            $call = Call::find($id);
+
+            if (!$call) {
+                return $this->errorResponse('Appel non trouvé', 404);
+            }
+
+            if ($call->assigned_to !== null) {
+                return $this->errorResponse(
+                    'Cet appel est déjà assigné à ' . ($call->assignedAgent ? $call->assignedAgent->name : 'un autre agent'),
+                    400
+                );
+            }
+
+            $call->update([
+                'assigned_to' => Auth::id(),
+                'status' => 'en_cours',
+            ]);
+
+            $call->load(['department', 'client', 'contact', 'assignedAgent', 'creator']);
+
+            Log::info('Appel auto-assigné', [
+                'call_id' => $call->call_id,
+                'assigned_to' => Auth::id(),
+                'user_name' => Auth::user()->name,
+                'previous_status' => $call->getOriginal('status'),
+                'new_status' => 'en_cours',
+            ]);
+
+            return $this->successResponse(
+                $call,
+                'Appel assigné avec succès',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'auto-assignation', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Erreur lors de l\'assignation',
+                500
+            );
+        }
+    }
 }

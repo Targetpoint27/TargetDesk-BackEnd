@@ -221,14 +221,15 @@ Route::prefix('v1')->group(function () {
 
             // List/filter calls - MUST be first!
             Route::get('/calls', [App\Http\Controllers\Api\V1\CallController::class, 'index']);
-
-            // Search route MUST come BEFORE /calls/{id} !
+            Route::get('/calls/my-queue', [App\Http\Controllers\Api\V1\CallController::class, 'myQueue']);
+            Route::get('/calls/department-queue', [App\Http\Controllers\Api\V1\CallController::class, 'departmentQueue']);
             Route::get('/calls/search', [App\Http\Controllers\Api\V1\CallController::class, 'search']);
 
             Route::get('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'show']);
             Route::put('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'update']);
             Route::put('/calls/{id}/status', [App\Http\Controllers\Api\V1\CallController::class, 'changeStatus']);
             Route::post('/calls/{id}/close', [App\Http\Controllers\Api\V1\CallController::class, 'close']);
+            Route::post('/calls/{id}/assign-to-me', [App\Http\Controllers\Api\V1\CallController::class, 'assignToMe']);
 
             // Call Notes
             Route::post('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'store']);

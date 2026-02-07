@@ -28,6 +28,7 @@ class User extends Authenticatable
         'status',
         'phone',
         'department',
+        'department_id',
         'last_login',
     ];
 
@@ -282,6 +283,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Department::class, 'department_user')
                     ->withPivot('role', 'assigned_at')
                     ->withTimestamps();
+    }
+
+    public function primaryDepartment()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function managedDepartments()

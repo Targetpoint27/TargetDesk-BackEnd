@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCallRequest;
 use App\Http\Requests\UpdateCallRequest;
 use App\Http\Requests\ChangeCallStatusRequest;
 use App\Models\CallStatusHistory;
+use App\Http\Requests\CloseCallRequest;
 use App\Models\Call;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -474,6 +475,365 @@ class CallController extends BaseApiController
 
             return $this->errorResponse(
                 'Erreur lors du changement de statut',
+                500
+            );
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/call-center/calls/{id}/close",
+     *     summary="Clôturer un appel",
+     *     description="Marque un appel comme clôturé avec résumé de résolution",
+     *     tags={"Calls"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"resolution_summary", "final_result"},
+     *             @OA\Property(property="resolution_summary", type="string", example="Problème résolu par réinitialisation du mot de passe. Client peut maintenant se connecter."),
+     *             @OA\Property(
+     *                 property="final_result",
+     *                 type="string",
+     *                 enum={"resolu_satisfait", "resolu_insatisfait", "transfere", "non_resolu"},
+     *                 example="resolu_satisfait"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Appel clôturé avec succès"),
+     *     @OA\Response(response=404, description="Appel non trouvé"),
+     *     @OA\Response(response=400, description="Appel déjà clôturé")
+     * )
+     */
+    public function close(CloseCallRequest $request, $id)
+    {
+        try {
+            $call = Call::find($id);
+
+            if (!$call) {
+                return $this->errorResponse('Appel non trouvé', 404);
+            }
+
+            if ($call->closed_at) {
+                return $this->errorResponse('Cet appel est déjà clôturé', 400);
+            }
+
+            $closedAt = now();
+            $treatmentTimeSeconds = $call->created_at->diffInSeconds($closedAt);
+
+            $call->update([
+                'status' => 'cloture',
+                'resolution_summary' => $request->resolution_summary,
+                'final_result' => $request->final_result,
+                'closed_at' => $closedAt,
+                'closed_by' => Auth::id(),
+                'treatment_time_seconds' => $treatmentTimeSeconds,
+            ]);
+
+            $call->load(['department', 'client', 'contact', 'assignedAgent', 'creator', 'closer']);
+
+            Log::info('Appel clôturé', [
+                'call_id' => $call->call_id,
+                'final_result' => $call->final_result,
+                'treatment_time_seconds' => $treatmentTimeSeconds,
+                'closed_by' => Auth::id(),
+                'user_name' => Auth::user()->name,
+            ]);
+
+            return $this->successResponse(
+                $call,
+                'Appel clôturé avec succès',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la clôture de l\'appel', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Erreur lors de la clôture de l\'appel',
+                500
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/call-center/calls/search",
+     *     summary="Rechercher des appels",
+     *     description="Recherche globale dans les appels par ID, téléphone, nom ou résumé",
+     *     tags={"Calls"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="q",
+     *         in="query",
+     *         required=true,
+     *         description="Terme de recherche",
+     *         @OA\Schema(type="string", example="Jean")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Résultats de recherche",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Résultats de recherche"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="call_id", type="string"),
+     *                     @OA\Property(property="phone_number", type="string"),
+     *                     @OA\Property(property="caller_name", type="string"),
+     *                     @OA\Property(property="object", type="string"),
+     *                     @OA\Property(property="status", type="string"),
+     *                     @OA\Property(property="urgency", type="string"),
+     *                     @OA\Property(property="created_at", type="string")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Terme de recherche requis"
+     *     )
+     * )
+     */
+    public function search(Request $request)
+    {
+        try {
+            $searchTerm = $request->query('q');
+
+            if (!$searchTerm || trim($searchTerm) === '') {
+                return $this->errorResponse('Le terme de recherche est obligatoire', 422);
+            }
+
+            $searchTerm = trim($searchTerm);
+
+            $calls = Call::where(function($query) use ($searchTerm) {
+                $query->where('call_id', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('caller_name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('summary', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('object', 'LIKE', "%{$searchTerm}%");
+            })
+            ->with(['department', 'assignedAgent', 'creator'])
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+            Log::info('Recherche d\'appels effectuée', [
+                'search_term' => $searchTerm,
+                'results_count' => $calls->count(),
+                'searched_by' => Auth::id(),
+                'user_name' => Auth::user()->name,
+            ]);
+
+            return $this->successResponse(
+                $calls,
+                $calls->count() . ' résultat(s) trouvé(s)',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la recherche d\'appels', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Erreur lors de la recherche',
+                500
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/call-center/calls",
+     *     summary="Lister et filtrer les appels",
+     *     description="Récupère la liste des appels avec filtres optionnels",
+     *     tags={"Calls"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="filter[type]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"entrant", "sortant"}),
+     *         example="entrant"
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter[status]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string"),
+     *         example="en_cours"
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter[department_id]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer"),
+     *         example=1
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter[urgency]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"normal", "urgent", "critique"}),
+     *         example="urgent"
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter[assigned_to]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string"),
+     *         example="me",
+     *         description="ID d'agent, 'me' pour mes appels, 'unassigned' pour non assignés"
+     *     ),
+     *     @OA\Parameter(
+     *         name="filter[period]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"today", "week", "month", "custom"}),
+     *         example="today"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des appels filtrés",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Liste des appels récupérée"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer", example=5),
+     *                 @OA\Property(property="filters_applied", type="object"),
+     *                 @OA\Property(property="calls", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function index(Request $request)
+    {
+        try {
+            $query = Call::query()->with(['department', 'assignedAgent', 'creator']);
+
+            $filtersApplied = [];
+
+            // Filter by type
+            if ($request->has('filter.type')) {
+                $query->where('type', $request->input('filter.type'));
+                $filtersApplied['type'] = $request->input('filter.type');
+            }
+
+            // Filter by status
+            if ($request->has('filter.status')) {
+                $query->where('status', $request->input('filter.status'));
+                $filtersApplied['status'] = $request->input('filter.status');
+            }
+
+            // Filter by department
+            if ($request->has('filter.department_id')) {
+                $query->where('department_id', $request->input('filter.department_id'));
+                $filtersApplied['department_id'] = $request->input('filter.department_id');
+            }
+
+            // Filter by urgency
+            if ($request->has('filter.urgency')) {
+                $query->where('urgency', $request->input('filter.urgency'));
+                $filtersApplied['urgency'] = $request->input('filter.urgency');
+            }
+
+            // Filter by assignment
+            if ($request->has('filter.assigned_to')) {
+                $assignedTo = $request->input('filter.assigned_to');
+                
+                if ($assignedTo === 'me') {
+                    $query->where('assigned_to', Auth::id());
+                    $filtersApplied['assigned_to'] = 'me';
+                } elseif ($assignedTo === 'unassigned') {
+                    $query->whereNull('assigned_to');
+                    $filtersApplied['assigned_to'] = 'unassigned';
+                } else {
+                    $query->where('assigned_to', $assignedTo);
+                    $filtersApplied['assigned_to'] = $assignedTo;
+                }
+            }
+
+            // Filter by period
+            if ($request->has('filter.period')) {
+                $period = $request->input('filter.period');
+                
+                switch ($period) {
+                    case 'today':
+                        $query->whereDate('created_at', today());
+                        $filtersApplied['period'] = 'today';
+                        break;
+                    
+                    case 'week':
+                        $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                        $filtersApplied['period'] = 'week';
+                        break;
+                    
+                    case 'month':
+                        $query->whereMonth('created_at', now()->month)
+                            ->whereYear('created_at', now()->year);
+                        $filtersApplied['period'] = 'month';
+                        break;
+                    
+                    case 'custom':
+                        if ($request->has('filter.date_from')) {
+                            $query->whereDate('created_at', '>=', $request->input('filter.date_from'));
+                            $filtersApplied['date_from'] = $request->input('filter.date_from');
+                        }
+                        if ($request->has('filter.date_to')) {
+                            $query->whereDate('created_at', '<=', $request->input('filter.date_to'));
+                            $filtersApplied['date_to'] = $request->input('filter.date_to');
+                        }
+                        $filtersApplied['period'] = 'custom';
+                        break;
+                }
+            }
+
+            $calls = $query->orderBy('created_at', 'desc')->get();
+
+            $response = [
+                'total' => $calls->count(),
+                'filters_applied' => $filtersApplied,
+                'calls' => $calls,
+            ];
+
+            Log::info('Liste des appels filtrés', [
+                'filters' => $filtersApplied,
+                'total_results' => $calls->count(),
+                'requested_by' => Auth::id(),
+            ]);
+
+            return $this->successResponse(
+                $response,
+                'Liste des appels récupérée',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des appels', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Erreur lors de la récupération des appels',
                 500
             );
         }

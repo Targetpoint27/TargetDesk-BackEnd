@@ -837,6 +837,131 @@
             }
         },
         "/api/v1/call-center/calls": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Lister et filtrer les appels",
+                "description": "Récupère la liste des appels avec filtres optionnels",
+                "operationId": "5b22c62be72451b83e1858a3eee1357a",
+                "parameters": [
+                    {
+                        "name": "filter[type]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "entrant",
+                                "sortant"
+                            ]
+                        },
+                        "example": "entrant"
+                    },
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en_cours"
+                    },
+                    {
+                        "name": "filter[department_id]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "filter[urgency]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "normal",
+                                "urgent",
+                                "critique"
+                            ]
+                        },
+                        "example": "urgent"
+                    },
+                    {
+                        "name": "filter[assigned_to]",
+                        "in": "query",
+                        "description": "ID d'agent, 'me' pour mes appels, 'unassigned' pour non assignés",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "me"
+                    },
+                    {
+                        "name": "filter[period]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month",
+                                "custom"
+                            ]
+                        },
+                        "example": "today"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des appels filtrés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Liste des appels récupérée"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "filters_applied": {
+                                                    "type": "object"
+                                                },
+                                                "calls": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Calls"
@@ -1479,6 +1604,157 @@
                     },
                     "422": {
                         "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/{id}/close": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Clôturer un appel",
+                "description": "Marque un appel comme clôturé avec résumé de résolution",
+                "operationId": "ea4d2e0ea294dd18cc1405a5412812a4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "resolution_summary",
+                                    "final_result"
+                                ],
+                                "properties": {
+                                    "resolution_summary": {
+                                        "type": "string",
+                                        "example": "Problème résolu par réinitialisation du mot de passe. Client peut maintenant se connecter."
+                                    },
+                                    "final_result": {
+                                        "type": "string",
+                                        "enum": [
+                                            "resolu_satisfait",
+                                            "resolu_insatisfait",
+                                            "transfere",
+                                            "non_resolu"
+                                        ],
+                                        "example": "resolu_satisfait"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Appel clôturé avec succès"
+                    },
+                    "404": {
+                        "description": "Appel non trouvé"
+                    },
+                    "400": {
+                        "description": "Appel déjà clôturé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/search": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Rechercher des appels",
+                "description": "Recherche globale dans les appels par ID, téléphone, nom ou résumé",
+                "operationId": "42907554ad99d164e7532c1bf98e38c7",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Terme de recherche",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Jean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Résultats de recherche",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Résultats de recherche"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "call_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "phone_number": {
+                                                        "type": "string"
+                                                    },
+                                                    "caller_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "object": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "urgency": {
+                                                        "type": "string"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Terme de recherche requis"
                     }
                 },
                 "security": [

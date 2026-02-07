@@ -224,12 +224,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/calls/my-queue', [App\Http\Controllers\Api\V1\CallController::class, 'myQueue']);
             Route::get('/calls/department-queue', [App\Http\Controllers\Api\V1\CallController::class, 'departmentQueue']);
             Route::get('/calls/search', [App\Http\Controllers\Api\V1\CallController::class, 'search']);
+            Route::get('/calls/callbacks', [App\Http\Controllers\Api\V1\CallController::class, 'callbacks']);
 
             Route::get('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'show']);
             Route::put('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'update']);
             Route::put('/calls/{id}/status', [App\Http\Controllers\Api\V1\CallController::class, 'changeStatus']);
             Route::post('/calls/{id}/close', [App\Http\Controllers\Api\V1\CallController::class, 'close']);
+            Route::put('/calls/{id}/schedule', [App\Http\Controllers\Api\V1\CallController::class, 'scheduleCallback']);
             Route::post('/calls/{id}/assign-to-me', [App\Http\Controllers\Api\V1\CallController::class, 'assignToMe']);
+            Route::post('/calls/missed', [App\Http\Controllers\Api\V1\CallController::class, 'storeMissedCall']);
+            Route::post('/calls/{id}/callback-result', [App\Http\Controllers\Api\V1\CallController::class, 'storeCallbackResult']);
 
             // Call Notes
             Route::post('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'store']);

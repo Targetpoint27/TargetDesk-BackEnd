@@ -1091,4 +1091,361 @@ class CallController extends BaseApiController
             );
         }
     }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/calls/missed",
+     * summary="Enregistrer un appel manqué",
+     * description="Enregistre un appel entrant manqué pour rappel ultérieur. Assigne automatiquement au département.",
+     * tags={"Calls"},
+     * security={{"sanctum":{}}},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"phone_number", "department_id"},
+     * @OA\Property(property="phone_number", type="string", example="0612345678"),
+     * @OA\Property(property="department_id", type="integer", example=1),
+     * @OA\Property(property="caller_name", type="string", example="Client Inconnu"),
+     * @OA\Property(property="notes", type="string", example="A appelé pendant la pause déjeuner")
+     * )
+     * ),
+     * @OA\Response(
+     * response=201,
+     * description="Appel manqué enregistré avec succès",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Appel manqué enregistré"),
+     * @OA\Property(property="data", type="object")
+     * )
+     * ),
+     * @OA\Response(response=422, description="Erreur de validation")
+     * )
+     */
+    public function storeMissedCall(\App\Http\Requests\StoreMissedCallRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+
+            // Creation of the Call
+            $call = Call::create([
+                'call_id' => Call::generateCallId(),
+                'type' => 'entrant',
+                'status' => 'a_rappeler',
+                'urgency' => 'urgent',           
+                'phone_number' => $validated['phone_number'],
+                'department_id' => $validated['department_id'],
+                'caller_name' => $validated['caller_name'] ?? 'Inconnu',
+                'object' => 'Appel Manqué',
+                'summary' => $validated['notes'] ?? 'Appel manqué enregistré manuellement',
+                'client_id' => $validated['client_id'] ?? null,
+                'assigned_to' => null,          
+                'created_by' => Auth::id(),
+                'scheduled_callback_date' => now()->toDateString(),
+                'scheduled_callback_time' => now()->toTimeString(),
+            ]);
+
+            // Load relations for the response
+            $call->load(['department']);
+
+            // Audit Log (Matches your existing pattern)
+            Log::info('Appel manqué enregistré', [
+                'call_id' => $call->call_id,
+                'department_id' => $validated['department_id'],
+                'created_by' => Auth::id()
+            ]);
+
+            return $this->successResponse(
+                $call,
+                'Appel manqué enregistré avec succès',
+                201
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur enregistrement appel manqué', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $this->errorResponse('Erreur lors de l\'enregistrement', 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     * path="/api/v1/call-center/calls/callbacks",
+     * summary="Liste des rappels à effectuer",
+     * description="Récupère la liste des appels avec le statut 'a_rappeler', triés par date de rappel (les plus anciens en premier).",
+     * tags={"Calls"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(
+     * name="filter[period]",
+     * in="query",
+     * required=false,
+     * @OA\Schema(type="string", enum={"today", "overdue", "future"}),
+     * description="Filtrer par période (aujourd'hui, en retard, à venir)"
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Liste des rappels récupérée",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="data", type="object",
+     * @OA\Property(property="total", type="integer"),
+     * @OA\Property(property="overdue_count", type="integer"),
+     * @OA\Property(property="calls", type="array", @OA\Items(type="object"))
+     * )
+     * )
+     * )
+     * )
+     */
+    public function callbacks(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            // We want calls assigned to ME or Unassigned calls in MY Department
+            $query = Call::where('status', 'a_rappeler')
+                        ->where(function($q) use ($user) {
+                            $q->where('assigned_to', $user->id)
+                              ->orWhere(function($subQ) use ($user) {
+                                  $subQ->whereNull('assigned_to')
+                                       ->where('department_id', $user->department_id);
+                              });
+                        });
+
+            // Optional Filter: Period
+            if ($request->has('filter.period')) {
+                $period = $request->input('filter.period');
+                $now = now();
+                
+                if ($period === 'overdue') {
+                    $query->where(function($q) use ($now) {
+                        $q->where('scheduled_callback_date', '<', $now->toDateString())
+                          ->orWhere(function($sq) use ($now) {
+                              $sq->where('scheduled_callback_date', '=', $now->toDateString())
+                                 ->where('scheduled_callback_time', '<', $now->toTimeString());
+                          });
+                    });
+                } elseif ($period === 'today') {
+                    $query->where('scheduled_callback_date', $now->toDateString());
+                } elseif ($period === 'future') {
+                    $query->where('scheduled_callback_date', '>', $now->toDateString());
+                }
+            }
+
+            // Sorting: Oldest scheduled date first (as requested in US)
+            $calls = $query->with(['department', 'client', 'contact', 'creator'])
+                        ->orderBy('scheduled_callback_date', 'asc')
+                        ->orderBy('scheduled_callback_time', 'asc')
+                        ->get();
+
+            $now = now();
+
+            // FIX 1: Safely parse the date for the counter
+            $overdueCount = $calls->filter(function ($call) use ($now) {
+                if (!$call->scheduled_callback_date) return false;
+                
+                // Strip the time part from the date string if it exists
+                $dateOnly = substr($call->scheduled_callback_date, 0, 10); 
+                $scheduled = \Carbon\Carbon::parse($dateOnly . ' ' . $call->scheduled_callback_time);
+                
+                return $scheduled->isPast();
+            })->count();
+
+            // FIX 2: Safely parse the date for the response meta data
+            $callsWithMeta = $calls->map(function ($call) use ($now) {
+                $callArray = $call->toArray();
+                
+                if ($call->scheduled_callback_date) {
+                    // Strip the time part from the date string if it exists
+                    $dateOnly = substr($call->scheduled_callback_date, 0, 10);
+                    $scheduled = \Carbon\Carbon::parse($dateOnly . ' ' . $call->scheduled_callback_time);
+                    
+                    $callArray['is_overdue'] = $scheduled->isPast();
+                    $callArray['time_until'] = $scheduled->diffForHumans();
+                } else {
+                    $callArray['is_overdue'] = false;
+                    $callArray['time_until'] = null;
+                }
+                
+                return $callArray;
+            });
+
+            Log::info('Liste des rappels consultée', [
+                'agent_id' => $user->id,
+                'count' => $calls->count()
+            ]);
+
+            return $this->successResponse([
+                'total' => $calls->count(),
+                'overdue_count' => $overdueCount,
+                'calls' => $callsWithMeta
+            ], 'Liste des rappels récupérée', 200);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur liste rappels', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
+
+    /**
+     * @OA\Put(
+     * path="/api/v1/call-center/calls/{id}/schedule",
+     * summary="Programmer un rappel (US-CC-019)",
+     * description="Programme une date et une heure de rappel pour un appel existant et passe le statut à 'a_rappeler'.",
+     * tags={"Calls"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"date", "time"},
+     * @OA\Property(property="date", type="string", format="date", example="2026-02-10"),
+     * @OA\Property(property="time", type="string", format="time", example="14:30"),
+     * @OA\Property(property="reason", type="string", example="Client en réunion"),
+     * @OA\Property(property="notes", type="string", example="Préparer le dossier technique avant rappel")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Rappel programmé avec succès")
+     * )
+     */
+    public function scheduleCallback(\App\Http\Requests\ScheduleCallbackRequest $request, $id)
+    {
+        try {
+            $call = Call::find($id);
+
+            if (!$call) {
+                return $this->errorResponse('Appel non trouvé', 404);
+            }
+
+            $validated = $request->validated();
+            $oldStatus = $call->status;
+
+            // Logic: Update Status + Set Schedule
+            $call->status = 'a_rappeler'; // Force status per US requirement
+            $call->scheduled_callback_date = $validated['date'];
+            $call->scheduled_callback_time = $validated['time'];
+            $call->callback_reason = $validated['reason'] ?? null;
+            $call->callback_notes = $validated['notes'] ?? null;
+            
+            // We keep the current assigned_to so the agent keeps the ownership
+            $call->save();
+
+            // Log history if status changed or just to record the schedule
+            CallStatusHistory::create([
+                'call_id' => $call->id,
+                'old_status' => $oldStatus,
+                'new_status' => 'a_rappeler',
+                'comment' => "Rappel programmé pour le {$validated['date']} à {$validated['time']}. Motif: " . ($validated['reason'] ?? 'Aucun'),
+                'changed_by' => Auth::id(),
+                'created_at' => now()
+            ]);
+
+            Log::info('Rappel programmé', [
+                'call_id' => $call->call_id,
+                'date' => $validated['date'],
+                'time' => $validated['time'],
+                'user' => Auth::user()->name
+            ]);
+
+            return $this->successResponse(
+                $call->fresh(),
+                'Rappel programmé avec succès',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur programmation rappel', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/calls/{id}/callback-result",
+     * summary="Enregistrer résultat rappel (US-CC-020)",
+     * description="Enregistre le résultat d'une tentative de rappel. Si 'contacte', passe en 'en_cours'. Si reprogrammation, reste 'a_rappeler'.",
+     * tags={"Calls"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"call_result", "summary"},
+     * @OA\Property(property="call_result", type="string", enum={"contacte", "messagerie", "pas_de_reponse"}, example="contacte"),
+     * @OA\Property(property="summary", type="string", example="Client joint, on avance sur le dossier."),
+     * @OA\Property(property="reschedule_date", type="string", format="date", example="2026-02-13"),
+     * @OA\Property(property="reschedule_time", type="string", format="time", example="14:00")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Résultat enregistré")
+     * )
+     */
+    public function storeCallbackResult(\App\Http\Requests\StoreCallbackResultRequest $request, $id)
+    {
+        try {
+            $call = Call::find($id);
+            if (!$call) return $this->errorResponse('Appel non trouvé', 404);
+
+            $validated = $request->validated();
+            
+            // 1. Increment attempts counter
+            $call->increment('callback_attempts');
+            $call->last_callback_at = now();
+            
+            // 2. Determine New Status
+            $newStatus = $call->status; // Default: No change
+            
+            if ($validated['call_result'] === 'contacte') {
+                // Success! Move to 'en_cours' so agent can work on it
+                $newStatus = 'en_cours';
+                // If it was unassigned (missed call), assign it to the caller now
+                if (!$call->assigned_to) {
+                    $call->assigned_to = Auth::id();
+                }
+            } 
+            
+            // 3. Handle Rescheduling (Snooze)
+            if (!empty($validated['reschedule_date'])) {
+                $call->scheduled_callback_date = $validated['reschedule_date'];
+                $call->scheduled_callback_time = $validated['reschedule_time'];
+                $newStatus = 'a_rappeler'; // Force stay in callback list
+            } elseif ($newStatus === 'en_cours') {
+                // If contacted and moved to processing, clear the schedule
+                $call->scheduled_callback_date = null;
+                $call->scheduled_callback_time = null;
+            }
+
+            $call->status = $newStatus;
+            $call->save();
+
+            // 4. Add a Note
+            $call->notes()->create([
+                'note' => "Tentative de rappel: " . ucfirst($validated['call_result']) . "\n" . $validated['summary'],
+                'created_by' => Auth::id()
+            ]);
+
+            // 5. Log History
+            if ($call->getOriginal('status') !== $newStatus) {
+                CallStatusHistory::create([
+                    'call_id' => $call->id,
+                    'old_status' => $call->getOriginal('status'),
+                    'new_status' => $newStatus,
+                    'comment' => "Suite au rappel: " . $validated['call_result'],
+                    'changed_by' => Auth::id(),
+                    'created_at' => now()
+                ]);
+            }
+
+            Log::info('Résultat rappel enregistré', [
+                'call_id' => $call->call_id,
+                'result' => $validated['call_result']
+            ]);
+
+            return $this->successResponse($call->fresh(), 'Résultat enregistré avec succès', 200);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur résultat rappel', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
 }

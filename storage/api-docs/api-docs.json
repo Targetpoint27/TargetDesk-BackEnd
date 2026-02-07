@@ -1945,6 +1945,280 @@
                 ]
             }
         },
+        "/api/v1/call-center/calls/missed": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Enregistrer un appel manqué",
+                "description": "Enregistre un appel entrant manqué pour rappel ultérieur. Assigne automatiquement au département.",
+                "operationId": "4b587a1d6580a1675efb863b71168539",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone_number",
+                                    "department_id"
+                                ],
+                                "properties": {
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "0612345678"
+                                    },
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "caller_name": {
+                                        "type": "string",
+                                        "example": "Client Inconnu"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "A appelé pendant la pause déjeuner"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Appel manqué enregistré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Appel manqué enregistré"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/callbacks": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Liste des rappels à effectuer",
+                "description": "Récupère la liste des appels avec le statut 'a_rappeler', triés par date de rappel (les plus anciens en premier).",
+                "operationId": "f7d01a02a049e4e7f1f08e277ebbe0c4",
+                "parameters": [
+                    {
+                        "name": "filter[period]",
+                        "in": "query",
+                        "description": "Filtrer par période (aujourd'hui, en retard, à venir)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "overdue",
+                                "future"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des rappels récupérée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "overdue_count": {
+                                                    "type": "integer"
+                                                },
+                                                "calls": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/{id}/schedule": {
+            "put": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Programmer un rappel (US-CC-019)",
+                "description": "Programme une date et une heure de rappel pour un appel existant et passe le statut à 'a_rappeler'.",
+                "operationId": "6cc6fe771f4d1cded2b5a6c29a9306c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "date",
+                                    "time"
+                                ],
+                                "properties": {
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-02-10"
+                                    },
+                                    "time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "14:30"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Client en réunion"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Préparer le dossier technique avant rappel"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rappel programmé avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/calls/{id}/callback-result": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Enregistrer résultat rappel (US-CC-020)",
+                "description": "Enregistre le résultat d'une tentative de rappel. Si 'contacte', passe en 'en_cours'. Si reprogrammation, reste 'a_rappeler'.",
+                "operationId": "8bf5ecd7c06b712a0949e82f4039e126",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_result",
+                                    "summary"
+                                ],
+                                "properties": {
+                                    "call_result": {
+                                        "type": "string",
+                                        "enum": [
+                                            "contacte",
+                                            "messagerie",
+                                            "pas_de_reponse"
+                                        ],
+                                        "example": "contacte"
+                                    },
+                                    "summary": {
+                                        "type": "string",
+                                        "example": "Client joint, on avance sur le dossier."
+                                    },
+                                    "reschedule_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-02-13"
+                                    },
+                                    "reschedule_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "14:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Résultat enregistré"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{client}/calls": {
             "get": {
                 "tags": [

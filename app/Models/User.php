@@ -261,4 +261,36 @@ class User extends Authenticatable
     {
         return $this->roles()->pluck('name')->toArray();
     }
+
+    public function createdCalls()
+    {
+        return $this->hasMany(Call::class, 'created_by');
+    }
+
+    public function assignedCalls()
+    {
+        return $this->hasMany(Call::class, 'assigned_to');
+    }
+
+    public function closedCalls()
+    {
+        return $this->hasMany(Call::class, 'closed_by');
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'department_user')
+                    ->withPivot('role', 'assigned_at')
+                    ->withTimestamps();
+    }
+
+    public function managedDepartments()
+    {
+        return $this->hasMany(Department::class, 'manager_id');
+    }
+
+    public function callNotes()
+    {
+        return $this->hasMany(CallNote::class, 'created_by');
+    }
 }

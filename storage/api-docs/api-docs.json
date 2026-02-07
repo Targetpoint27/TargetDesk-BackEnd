@@ -836,6 +836,350 @@
                 ]
             }
         },
+        "/api/v1/calls": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Créer un appel (entrant ou sortant)",
+                "description": "Enregistre un nouvel appel entrant ou sortant avec génération automatique d'un identifiant unique",
+                "operationId": "8d05ca9ade06638d07dd4846e5486214",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "phone_number",
+                                    "department_id",
+                                    "object",
+                                    "summary"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "Type d'appel",
+                                        "type": "string",
+                                        "enum": [
+                                            "entrant",
+                                            "sortant"
+                                        ],
+                                        "example": "entrant"
+                                    },
+                                    "phone_number": {
+                                        "description": "Numéro de téléphone",
+                                        "type": "string",
+                                        "example": "0612345678"
+                                    },
+                                    "caller_name": {
+                                        "description": "Nom de l'appelant (optionnel)",
+                                        "type": "string",
+                                        "example": "Jean Dupont"
+                                    },
+                                    "department_id": {
+                                        "description": "ID du département cible",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "object": {
+                                        "description": "Objet/motif de l'appel",
+                                        "type": "string",
+                                        "example": "Problème technique"
+                                    },
+                                    "summary": {
+                                        "description": "Résumé détaillé de l'appel",
+                                        "type": "string",
+                                        "example": "Le client rencontre une erreur..."
+                                    },
+                                    "urgency": {
+                                        "description": "Niveau d'urgence (optionnel, défaut: normal)",
+                                        "type": "string",
+                                        "enum": [
+                                            "normal",
+                                            "urgent",
+                                            "critique"
+                                        ],
+                                        "example": "urgent"
+                                    },
+                                    "client_id": {
+                                        "description": "ID du client lié (optionnel)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "contact_id": {
+                                        "description": "ID du contact lié (optionnel)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "related_to_type": {
+                                        "description": "Type d'entité liée (optionnel)",
+                                        "type": "string",
+                                        "enum": [
+                                            "prospect",
+                                            "client",
+                                            "project",
+                                            "command"
+                                        ],
+                                        "example": "client"
+                                    },
+                                    "related_to_id": {
+                                        "description": "ID de l'entité liée (optionnel)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "outbound_reason": {
+                                        "description": "Motif de l'appel sortant (requis si type=sortant)",
+                                        "type": "string",
+                                        "enum": [
+                                            "rappel_client",
+                                            "prospection",
+                                            "suivi_commande",
+                                            "enquete_satisfaction",
+                                            "relance_paiement"
+                                        ],
+                                        "example": "rappel_client"
+                                    },
+                                    "call_result": {
+                                        "description": "Résultat de l'appel sortant (optionnel)",
+                                        "type": "string",
+                                        "enum": [
+                                            "contacte",
+                                            "messagerie",
+                                            "pas_de_reponse",
+                                            "numero_errone",
+                                            "refuse"
+                                        ],
+                                        "example": "contacte"
+                                    },
+                                    "call_duration_seconds": {
+                                        "description": "Durée de l'appel en secondes (optionnel)",
+                                        "type": "integer",
+                                        "example": 180
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Appel créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Appel créé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "call_id": {
+                                                    "type": "string",
+                                                    "example": "CALL-2026-0001"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "entrant"
+                                                },
+                                                "phone_number": {
+                                                    "type": "string",
+                                                    "example": "0612345678"
+                                                },
+                                                "caller_name": {
+                                                    "type": "string",
+                                                    "example": "Jean Dupont"
+                                                },
+                                                "department_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "object": {
+                                                    "type": "string",
+                                                    "example": "Problème technique"
+                                                },
+                                                "summary": {
+                                                    "type": "string",
+                                                    "example": "Le client rencontre une erreur..."
+                                                },
+                                                "urgency": {
+                                                    "type": "string",
+                                                    "example": "urgent"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "a_traiter"
+                                                },
+                                                "assigned_to": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "created_by": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-02-07T13:42:43.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-02-07T13:42:43.000000Z"
+                                                },
+                                                "department": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Support Technique"
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "SUP"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "assigned_agent": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Chi Samuel Apeng"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "samuel@targetpoint.fr"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "creator": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Chi Samuel Apeng"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "samuel@targetpoint.fr"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation errors"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "phone_number": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le numéro de téléphone est obligatoire"
+                                                    }
+                                                },
+                                                "department_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le département cible est obligatoire"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la création de l'appel"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{client}/calls": {
             "get": {
                 "tags": [
@@ -1796,7 +2140,7 @@
                                                             },
                                                             "match_score": {
                                                                 "type": "number",
-                                                                "example": 0.9499999999999999555910790149937383830547332763671875
+                                                                "example": 0.95
                                                             }
                                                         },
                                                         "type": "object"
@@ -3498,7 +3842,7 @@
                                                             },
                                                             "percentage": {
                                                                 "type": "number",
-                                                                "example": 60.7000000000000028421709430404007434844970703125
+                                                                "example": 60.7
                                                             }
                                                         },
                                                         "type": "object"
@@ -3518,7 +3862,7 @@
                                                             },
                                                             "percentage": {
                                                                 "type": "number",
-                                                                "example": 17.800000000000000710542735760100185871124267578125
+                                                                "example": 17.8
                                                             }
                                                         },
                                                         "type": "object"
@@ -5968,7 +6312,7 @@
                                                             },
                                                             "match_score": {
                                                                 "type": "number",
-                                                                "example": 0.9499999999999999555910790149937383830547332763671875
+                                                                "example": 0.95
                                                             }
                                                         },
                                                         "type": "object"
@@ -7690,6 +8034,10 @@
         {
             "name": "Appointments",
             "description": "Gestion des rendez-vous client"
+        },
+        {
+            "name": "Calls",
+            "description": "Gestion des appels call center"
         },
         {
             "name": "Call Logs",

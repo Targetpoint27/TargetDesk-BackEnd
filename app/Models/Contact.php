@@ -186,4 +186,9 @@ class Contact extends Model
     {
         return $this->client_id ? $this->client : $this->supplier;
     }
+
+    public function calls()
+    {
+        return $this->hasMany(Call::class);
+    }
 }

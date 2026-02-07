@@ -181,4 +181,9 @@ class Client extends Model
     {
         return $this->hasMany(ClientDocument::class);
     }
+
+    public function calls()
+    {
+        return $this->hasMany(Call::class);
+    }
 }

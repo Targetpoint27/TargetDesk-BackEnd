@@ -215,7 +215,8 @@ Route::prefix('v1')->group(function () {
         Route::get('email-reminders/sent', [EmailNotificationPreferenceController::class, 'getSentReminders']);
         Route::get('email-reminders/statistics', [EmailNotificationPreferenceController::class, 'getStatistics']);
 
-        // Add protected API routes here
+        // Calls routes (US-CC-001)
+        Route::post('/calls', [App\Http\Controllers\Api\V1\CallController::class, 'store']);
     });
 });
 

@@ -1448,4 +1448,60 @@ class CallController extends BaseApiController
             return $this->errorResponse('Erreur serveur', 500);
         }
     }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/calls/{id}/link-client",
+     * summary="Lier un client à un appel (US-CC-031)",
+     * description="Associe un appel existant à une fiche client du CRM.",
+     * tags={"Calls"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"client_id"},
+     * @OA\Property(property="client_id", type="integer", example=5)
+     * )
+     * ),
+     * @OA\Response(
+     * response=200, 
+     * description="Client lié avec succès",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="data", type="object")
+     * )
+     * )
+     * )
+     */
+    public function linkClient(\App\Http\Requests\LinkClientRequest $request, $id)
+    {
+        // ... (keep your existing PHP code inside the function exactly the same) ...
+        try {
+            $call = Call::findOrFail($id);
+            $validated = $request->validated();
+
+            // 1. Link the client
+            $call->client_id = $validated['client_id'];
+            $call->save();
+            
+            $call->load(['client']);
+
+            Log::info('Client lié à l\'appel', [
+                'call_id' => $call->call_id,
+                'client_id' => $validated['client_id'],
+                'linked_by' => Auth::id()
+            ]);
+
+            return $this->successResponse(
+                $call,
+                'Appel associé au client avec succès',
+                200
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Erreur liaison client', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
 }

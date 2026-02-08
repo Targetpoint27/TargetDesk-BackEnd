@@ -2219,6 +2219,71 @@
                 ]
             }
         },
+        "/api/v1/call-center/calls/{id}/link-client": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Lier un client à un appel (US-CC-031)",
+                "description": "Associe un appel existant à une fiche client du CRM.",
+                "operationId": "b4ca62e07c5f301f6f8ad33d09ca6282",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "client_id"
+                                ],
+                                "properties": {
+                                    "client_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Client lié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{client}/calls": {
             "get": {
                 "tags": [
@@ -2683,6 +2748,102 @@
                     },
                     "422": {
                         "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/reports/daily": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Consulter 'Mes appels du jour' (US-CC-040)",
+                "description": "Affiche l'activité quotidienne de l'agent : liste des appels, KPIs et graphiques.",
+                "operationId": "9adc3ffb2c1e6660364fc4810f77bee9",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Date spécifique (Format YYYY-MM-DD). Défaut: Aujourd'hui.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-02-07"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rapport quotidien récupéré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "date": {
+                                                    "type": "string",
+                                                    "example": "2026-02-07"
+                                                },
+                                                "summary": {
+                                                    "properties": {
+                                                        "total_treated": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total_closed": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total_in_progress": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "total_time_seconds": {
+                                                            "type": "integer",
+                                                            "example": 3600
+                                                        },
+                                                        "avg_time_per_call": {
+                                                            "type": "string",
+                                                            "example": "00:04:00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "graphs": {
+                                                    "properties": {
+                                                        "by_status": {
+                                                            "type": "object"
+                                                        },
+                                                        "by_type": {
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "calls": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -7566,6 +7727,201 @@
                 ]
             }
         },
+        "/api/v1/call-center/supervisor/team-view": {
+            "get": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Consulter la vue d'équipe",
+                "description": "Récupère la liste des agents du département avec leur statut et charge de travail en temps réel.",
+                "operationId": "20c430c793f7cf4b8968887ac106e2d6",
+                "responses": {
+                    "200": {
+                        "description": "Vue équipe récupérée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "active"
+                                                    },
+                                                    "calls_today": {
+                                                        "type": "integer"
+                                                    },
+                                                    "active_calls": {
+                                                        "type": "integer"
+                                                    },
+                                                    "avg_handling_time": {
+                                                        "type": "string"
+                                                    },
+                                                    "load_status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "vert",
+                                                            "orange",
+                                                            "rouge"
+                                                        ]
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/team-stats": {
+            "get": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Consulter les statistiques d'équipe (US-CC-044)",
+                "description": "Récupère les KPIs globaux de l'équipe (Volume, SLA, Satisfaction).",
+                "operationId": "90986b11cab837fc27fc9d97e7c19344",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/calls/{id}/reassign": {
+            "put": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Réassigner un appel (US-CC-045)",
+                "description": "Transfère un appel d'un agent à un autre.",
+                "operationId": "d9e3838606ac0779d238ffb900c4b76c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "new_agent_id"
+                                ],
+                                "properties": {
+                                    "new_agent_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Surcharge de l'agent initial"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Appel réassigné"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/queue": {
+            "get": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Consulter la file d'appels à traiter (US-CC-046)",
+                "description": "Affiche tous les appels en attente du département, triés par urgence.",
+                "operationId": "571f328e93393124e2464c0eaaf32655",
+                "responses": {
+                    "200": {
+                        "description": "File d'attente récupérée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/complaints": {
+            "get": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Consulter les réclamations de l'équipe (US-CC-047)",
+                "description": "Affiche toutes les réclamations du département avec indicateurs SLA.",
+                "operationId": "d19f4e8f99d67c7315b39e60e0940973",
+                "responses": {
+                    "200": {
+                        "description": "Réclamations équipe récupérées"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/suppliers": {
             "get": {
                 "tags": [
@@ -9629,6 +9985,10 @@
             "description": "Journal des appels client"
         },
         {
+            "name": "Reports",
+            "description": "Reporting et statistiques Call Center (Epic 7)"
+        },
+        {
             "name": "Categories",
             "description": "Gestion des catégories pour la segmentation des clients"
         },
@@ -9667,6 +10027,10 @@
         {
             "name": "Roles",
             "description": "API pour la gestion des rôles"
+        },
+        {
+            "name": "Supervisor",
+            "description": "Fonctionnalités de supervision et reporting (Epic 8)"
         },
         {
             "name": "Supplier Documents",

@@ -225,6 +225,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/calls/department-queue', [App\Http\Controllers\Api\V1\CallController::class, 'departmentQueue']);
             Route::get('/calls/search', [App\Http\Controllers\Api\V1\CallController::class, 'search']);
             Route::get('/calls/callbacks', [App\Http\Controllers\Api\V1\CallController::class, 'callbacks']);
+            Route::get('/reports/daily', [App\Http\Controllers\Api\V1\CallReportController::class, 'dailyActivity']);
 
             Route::get('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'show']);
             Route::put('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'update']);
@@ -234,6 +235,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/calls/{id}/assign-to-me', [App\Http\Controllers\Api\V1\CallController::class, 'assignToMe']);
             Route::post('/calls/missed', [App\Http\Controllers\Api\V1\CallController::class, 'storeMissedCall']);
             Route::post('/calls/{id}/callback-result', [App\Http\Controllers\Api\V1\CallController::class, 'storeCallbackResult']);
+            Route::post('/calls/{id}/link-client', [App\Http\Controllers\Api\V1\CallController::class, 'linkClient']);
 
             // Call Notes
             Route::post('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'store']);
@@ -245,6 +247,15 @@ Route::prefix('v1')->group(function () {
             Route::put('/complaints/{id}', [App\Http\Controllers\Api\V1\ComplaintController::class, 'update']);
             Route::post('/complaints/{id}/resolve', [App\Http\Controllers\Api\V1\ComplaintController::class, 'resolve']);
             Route::post('/complaints/{id}/close', [App\Http\Controllers\Api\V1\ComplaintController::class, 'close']);
+        });
+
+        // Supervisor Routes (Epic 8)
+        Route::prefix('call-center/supervisor')->group(function () {
+            Route::get('/team-view', [App\Http\Controllers\Api\V1\SupervisorController::class, 'teamView']);
+            Route::get('/team-stats', [App\Http\Controllers\Api\V1\SupervisorController::class, 'teamStats']);
+            Route::put('/calls/{id}/reassign', [App\Http\Controllers\Api\V1\SupervisorController::class, 'reassign']);
+            Route::get('/queue', [App\Http\Controllers\Api\V1\SupervisorController::class, 'queueView']);
+            Route::get('/complaints', [App\Http\Controllers\Api\V1\SupervisorController::class, 'complaintsView']);
         });
     });
 });

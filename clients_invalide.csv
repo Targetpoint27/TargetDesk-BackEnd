@@ -1,7 +1,0 @@
-name,type,email,phone,address,siret,sector,website,notes
-"","entreprise","contact@invalid-empty-name.com","0123456789","123 Rue Test","12345678901234","Tech","https://test.com","Nom vide - invalide"
-"Client Mauvais Type","mauvais_type","test@email.com","0987654321","456 Avenue Test","","Conseil","","Type invalide"
-"Client Email Invalide","particulier","email_invalide_sans_arobase","0145678923","789 Boulevard Test","98765432109876","Info","site_invalide","Email sans @"
-"Client SIRET Invalide","entreprise","siret@invalid.com","0678945612","321 Rue Test","123","Marketing","https://valid.com","SIRET trop court"
-"Client URL Invalide","particulier","url@test.com","0156789234","654 Place Test","","Industrie","site_sans_protocole","URL invalide"
-"Doublon Email","entreprise","contact@acme-sarl.com","0123456789","999 Rue Doublon","55555555555555","Test","https://doublon.com","Email déjà utilisé dans fichier valide"

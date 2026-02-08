@@ -18,6 +18,791 @@
         }
     ],
     "paths": {
+        "/api/v1/admin/call-motifs": {
+            "get": {
+                "tags": [
+                    "Admin - Call Motifs"
+                ],
+                "summary": "Lister tous les motifs d'appel",
+                "description": "Récupère la liste de tous les motifs avec structure hiérarchique",
+                "operationId": "efbb6bef0473d4683ccaea42ded1f688",
+                "parameters": [
+                    {
+                        "name": "tree",
+                        "in": "query",
+                        "description": "Retourner en structure arborescente (true/false)",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des motifs récupérée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Call Motifs"
+                ],
+                "summary": "Créer un motif d'appel",
+                "operationId": "8774c9e18ff1f99240c5e4cdbb441e3a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "label",
+                                    "category"
+                                ],
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "example": "Problème de facturation"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "info",
+                                            "reclamation",
+                                            "support",
+                                            "commercial",
+                                            "autre"
+                                        ],
+                                        "example": "reclamation"
+                                    },
+                                    "parent_id": {
+                                        "type": "integer",
+                                        "example": null
+                                    },
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "sla_hours": {
+                                        "type": "integer",
+                                        "example": 24
+                                    },
+                                    "suggested_script": {
+                                        "type": "string",
+                                        "example": "Bonjour, concernant votre facture..."
+                                    },
+                                    "display_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motif créé avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/call-motifs/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Call Motifs"
+                ],
+                "summary": "Voir détails d'un motif",
+                "operationId": "59d7dc89e4afa06e94f7b13b91fd62ee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du motif"
+                    },
+                    "404": {
+                        "description": "Motif non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Call Motifs"
+                ],
+                "summary": "Modifier un motif",
+                "operationId": "9267a80641236a34464be8465e72539b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "type": "string"
+                                    },
+                                    "sla_hours": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motif modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Call Motifs"
+                ],
+                "summary": "Supprimer un motif",
+                "operationId": "d9f357327382fe44992b6719cad4b428",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motif supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/call-motifs/{id}/toggle-status": {
+            "put": {
+                "tags": [
+                    "Admin - Call Motifs"
+                ],
+                "summary": "Activer/Désactiver un motif",
+                "operationId": "23ea306fd642fe72c0f95c3b029841b2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statut modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/departments": {
+            "get": {
+                "tags": [
+                    "Admin - Departments"
+                ],
+                "summary": "Lister tous les départements",
+                "description": "Récupère la liste de tous les départements avec compteur d'appels",
+                "operationId": "bf198073babb6025587707cee359c5e0",
+                "responses": {
+                    "200": {
+                        "description": "Liste des départements récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Liste des départements récupérée"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "calls_count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Departments"
+                ],
+                "summary": "Créer un département",
+                "description": "Crée un nouveau département",
+                "operationId": "9e70bbc616e5900c6c034e6f2e0c853a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Support Niveau 2"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "maxLength": 10,
+                                        "example": "SUP2"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Support technique niveau 2"
+                                    },
+                                    "manager_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Département créé avec succès"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/departments/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Departments"
+                ],
+                "summary": "Voir détails d'un département",
+                "description": "Récupère les détails complets d'un département",
+                "operationId": "d44e929067103c69865b2a2e08ac3ab6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du département"
+                    },
+                    "404": {
+                        "description": "Département non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Departments"
+                ],
+                "summary": "Modifier un département",
+                "description": "Met à jour les informations d'un département",
+                "operationId": "ed49b0191f173542fdf8433ced0fd96a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "code": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "manager_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Département modifié"
+                    },
+                    "404": {
+                        "description": "Département non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Departments"
+                ],
+                "summary": "Supprimer un département",
+                "description": "Suppression logique d'un département (soft delete)",
+                "operationId": "f95d35dde6fdf2be10aac803887660f7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Département supprimé"
+                    },
+                    "404": {
+                        "description": "Département non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/departments/{id}/toggle-status": {
+            "put": {
+                "tags": [
+                    "Admin - Departments"
+                ],
+                "summary": "Activer/Désactiver un département",
+                "description": "Change le statut actif/inactif d'un département",
+                "operationId": "12d39058baaed832ada6432c80b945be",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statut modifié"
+                    },
+                    "404": {
+                        "description": "Département non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users": {
+            "get": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Lister tous les utilisateurs",
+                "operationId": "437ceb23d67b89b680b3e7054665aa3a",
+                "responses": {
+                    "200": {
+                        "description": "Liste des utilisateurs"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Créer un utilisateur",
+                "operationId": "ce7d1444183da354826b4c7cdec1bd59",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Marie Dupont"
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "Marie"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Dupont"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "marie.dupont@targetpoint.fr"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0612345678"
+                                    },
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Utilisateur créé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Voir détails d'un utilisateur",
+                "operationId": "3a8e270670ad944902de23d87825cc8f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de l'utilisateur"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Modifier un utilisateur",
+                "operationId": "e1bc70f80ef0f652b15327a77fb43069",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "department_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}/assign-role": {
+            "put": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Assigner un rôle à un utilisateur",
+                "operationId": "2dc82ca65ccf27fa09ca6b083c791970",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "role"
+                                ],
+                                "properties": {
+                                    "role": {
+                                        "description": "agent, supervisor, manager, admin",
+                                        "type": "string",
+                                        "example": "agent"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rôle assigné"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}/toggle-status": {
+            "put": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Activer/Désactiver un utilisateur",
+                "operationId": "8d221256891813d7c411efcb33c33e58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statut modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}/reset-password": {
+            "post": {
+                "tags": [
+                    "Admin - Users"
+                ],
+                "summary": "Réinitialiser le mot de passe",
+                "operationId": "0c2d3891e6cbe7f62e843001b57c1adc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "new_password"
+                                ],
+                                "properties": {
+                                    "new_password": {
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe réinitialisé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/health": {
             "get": {
                 "tags": [
@@ -6757,6 +7542,42 @@
                 ]
             }
         },
+        "/api/v1/call-center/manager/dashboard": {
+            "get": {
+                "tags": [
+                    "Manager"
+                ],
+                "summary": "Consulter le dashboard département (US-CC-050)",
+                "description": "Affiche les indicateurs clés globaux, les tendances et les motifs d'appels.",
+                "operationId": "38990ced29500185667362947a6bbaa4",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Défaut: month",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard manager récupéré"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/permissions": {
             "get": {
                 "tags": [
@@ -10017,6 +10838,10 @@
             "description": "API pour la gestion des préférences de notifications email"
         },
         {
+            "name": "Manager",
+            "description": "Reporting stratégique pour les managers (Epic 9)"
+        },
+        {
             "name": "Permissions",
             "description": "API pour la gestion des permissions"
         },
@@ -10039,6 +10864,18 @@
         {
             "name": "User Roles",
             "description": "API pour la gestion des rôles utilisateur"
+        },
+        {
+            "name": "Admin - Call Motifs",
+            "description": "Admin - Call Motifs"
+        },
+        {
+            "name": "Admin - Departments",
+            "description": "Admin - Departments"
+        },
+        {
+            "name": "Admin - Users",
+            "description": "Admin - Users"
         },
         {
             "name": "System",

@@ -257,6 +257,39 @@ Route::prefix('v1')->group(function () {
             Route::get('/queue', [App\Http\Controllers\Api\V1\SupervisorController::class, 'queueView']);
             Route::get('/complaints', [App\Http\Controllers\Api\V1\SupervisorController::class, 'complaintsView']);
         });
+
+        // Manager Routes (Epic 9)
+        Route::prefix('call-center/manager')->group(function () {
+            Route::get('/dashboard', [App\Http\Controllers\Api\V1\ManagerReportController::class, 'dashboard']);
+        });
+
+        // Admin routes
+        Route::prefix('admin')->group(function () {
+            // Departments
+            Route::get('/departments', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'index']);
+            Route::post('/departments', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'store']);
+            Route::get('/departments/{id}', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'show']);
+            Route::put('/departments/{id}', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'update']);
+            Route::delete('/departments/{id}', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'destroy']);
+            Route::put('/departments/{id}/toggle-status', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'toggleStatus']);
+
+            // Call Motifs
+            Route::get('/call-motifs', [App\Http\Controllers\Api\V1\Admin\CallMotifController::class, 'index']);
+            Route::post('/call-motifs', [App\Http\Controllers\Api\V1\Admin\CallMotifController::class, 'store']);
+            Route::get('/call-motifs/{id}', [App\Http\Controllers\Api\V1\Admin\CallMotifController::class, 'show']);
+            Route::put('/call-motifs/{id}', [App\Http\Controllers\Api\V1\Admin\CallMotifController::class, 'update']);
+            Route::delete('/call-motifs/{id}', [App\Http\Controllers\Api\V1\Admin\CallMotifController::class, 'destroy']);
+            Route::put('/call-motifs/{id}/toggle-status', [App\Http\Controllers\Api\V1\Admin\CallMotifController::class, 'toggleStatus']);
+
+            // Users
+            Route::get('/users', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'index']);
+            Route::post('/users', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'store']);
+            Route::get('/users/{id}', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'show']);
+            Route::put('/users/{id}', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'update']);
+            Route::put('/users/{id}/assign-role', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'assignRole']);
+            Route::put('/users/{id}/toggle-status', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'toggleStatus']);
+            Route::post('/users/{id}/reset-password', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'resetPassword']);
+        });
     });
 });
 

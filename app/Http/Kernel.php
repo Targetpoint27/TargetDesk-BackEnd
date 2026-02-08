@@ -44,6 +44,7 @@ class Kernel extends HttpKernel
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\ApiMiddleware::class,
+            \App\Http\Middleware\DetectSuspiciousLogin::class,
         ],
     ];
 
@@ -66,5 +67,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'permission' => \App\Http\Middleware\CheckPermission::class,
         'role' => \App\Http\Middleware\CheckRole::class,
+        'check.status' => \App\Http\Middleware\CheckUserStatus::class,
     ];
 }

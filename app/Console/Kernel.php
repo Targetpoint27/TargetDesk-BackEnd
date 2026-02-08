@@ -29,6 +29,13 @@ class Kernel extends ConsoleKernel
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/schedule-reminders.log'));
 
+        // Clean up expired reminders every hour
+        $schedule->command('appointments:cleanup-expired-reminders')
+            ->hourly()
+            ->withoutOverlapping(15)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/cleanup-reminders.log'));
+
         // Clean up old failed reminders (older than 30 days) - run daily at 2 AM
         $schedule->call(function () {
             \App\Models\ScheduledEmailReminder::where('status', 'failed')

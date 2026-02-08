@@ -7,7 +7,7 @@ APP_NAME=TargetDesk
 APP_ENV=production
 APP_KEY=base64:2fvoDL+e2Gf6v8bJX2vn3gaioaL+j43Syyg3c6NCnd0=
 APP_DEBUG=false
-APP_URL=https://motivational-nickel-rabbit.148-230-126-127.cpanel.site/test/api
+APP_URL=https://targetdesk.fr/test/api
 
 LOG_CHANNEL=stack
 LOG_DEPRECATIONS_CHANNEL=null
@@ -44,11 +44,11 @@ MAIL_FROM_ADDRESS=VOTRE_EMAIL@VOTRE_DOMAINE.com
 MAIL_FROM_NAME="TargetDesk CRM"
 
 # Configuration Swagger pour serveur distant
-L5_SWAGGER_CONST_HOST=motivational-nickel-rabbit.148-230-126-127.cpanel.site/test/api/public
+L5_SWAGGER_CONST_HOST=targetdesk.fr/test/api/public
 L5_SWAGGER_BASE_PATH=/test/api/public/api
 
 # Configuration CORS et Sanctum
-SANCTUM_STATEFUL_DOMAINS=motivational-nickel-rabbit.148-230-126-127.cpanel.site
+SANCTUM_STATEFUL_DOMAINS=targetdesk.fr
 
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=

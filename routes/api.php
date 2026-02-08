@@ -45,7 +45,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
 
         // Protected auth routes
-        Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware(['auth:sanctum', 'check.status'])->group(function () {
             Route::get('/user', [AuthController::class, 'user']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
@@ -57,7 +57,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Protected routes
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'check.status'])->group(function () {
         // Legacy user profile (keep for compatibility)
         Route::get('/user', [ApiController::class, 'user']);
 
@@ -214,6 +214,7 @@ Route::prefix('v1')->group(function () {
         Route::get('email-reminders/pending', [EmailNotificationPreferenceController::class, 'getPendingReminders']);
         Route::get('email-reminders/sent', [EmailNotificationPreferenceController::class, 'getSentReminders']);
         Route::get('email-reminders/statistics', [EmailNotificationPreferenceController::class, 'getStatistics']);
+
 
         // Add protected API routes here
     });

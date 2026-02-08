@@ -52,6 +52,7 @@ class User extends Authenticatable
         'status' => 'string',
     ];
 
+
     /**
      * Get the roles assigned to this user
      */

@@ -5399,6 +5399,352 @@
                 ]
             }
         },
+        "/api/v1/call-center/complaints": {
+            "get": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Lister les réclamations",
+                "description": "Récupère la liste des réclamations avec filtres (statut, gravité, SLA dépassé).",
+                "operationId": "a674c825cc0369797568eb326be2fb2a",
+                "parameters": [
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[severity]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[is_overdue]",
+                        "in": "query",
+                        "description": "true pour voir uniquement les retards",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "overdue_count": {
+                                                    "type": "integer"
+                                                },
+                                                "complaints": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Créer une réclamation",
+                "description": "Enregistre une nouvelle réclamation liée à un appel avec calcul automatique du SLA.",
+                "operationId": "910064d134af330c6b27967b05d4ede4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_id",
+                                    "category",
+                                    "severity",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "call_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "client_id": {
+                                        "description": "Optionnel, sinon pris de l'appel",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "produit_defectueux",
+                                            "service_insatisfaisant",
+                                            "livraison_retard",
+                                            "facturation_erronee",
+                                            "comportement_personnel",
+                                            "autre"
+                                        ]
+                                    },
+                                    "severity": {
+                                        "type": "string",
+                                        "enum": [
+                                            "faible",
+                                            "moyen",
+                                            "eleve",
+                                            "critique"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Le client a reçu le mauvais produit et le livreur était impoli."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Réclamation créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "complaint_id": {
+                                                    "type": "string",
+                                                    "example": "REC-2026-0001"
+                                                },
+                                                "sla_deadline": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "ouverte"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/complaints/{id}": {
+            "put": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Traiter une réclamation",
+                "description": "Met à jour les informations de traitement, le statut et l'assignation.",
+                "operationId": "7d6da4ee830d65a0801bd5065fe68706",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "en_analyse",
+                                            "en_attente_client"
+                                        ]
+                                    },
+                                    "assigned_to": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "root_cause": {
+                                        "type": "string",
+                                        "example": "Erreur de picking à l'entrepôt"
+                                    },
+                                    "actions_taken": {
+                                        "type": "string",
+                                        "example": "Contacté l'entrepôt pour vérification"
+                                    },
+                                    "proposed_solution": {
+                                        "type": "string",
+                                        "example": "Envoi d'un nouveau produit en express"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Réclamation mise à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/complaints/{id}/resolve": {
+            "post": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Résoudre une réclamation",
+                "description": "Marque la réclamation comme résolue avec le résumé de la solution et la satisfaction client.",
+                "operationId": "386909617cd60976467d1bb2a3d9085b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "resolution_summary",
+                                    "client_satisfaction"
+                                ],
+                                "properties": {
+                                    "resolution_summary": {
+                                        "type": "string",
+                                        "example": "Produit remplacé et client remboursé des frais de port."
+                                    },
+                                    "client_satisfaction": {
+                                        "type": "string",
+                                        "enum": [
+                                            "satisfait",
+                                            "partiellement_satisfait",
+                                            "non_satisfait"
+                                        ]
+                                    },
+                                    "compensation_details": {
+                                        "type": "string",
+                                        "example": "Bon d'achat de 10€ offert"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Réclamation résolue"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/complaints/{id}/close": {
+            "post": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Clôturer une réclamation",
+                "description": "Validation finale par un superviseur. La réclamation doit être 'resolue' avant d'être clôturée.",
+                "operationId": "c0c3fe2c11526d5158bf0ad2bf854899",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "closing_comment": {
+                                        "type": "string",
+                                        "example": "Dossier validé. Client satisfait."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Réclamation clôturée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/clients/{clientId}/contacts": {
             "get": {
                 "tags": [
@@ -9301,6 +9647,10 @@
         {
             "name": "Commercial Dashboard",
             "description": "API endpoints for commercial dashboard analytics and metrics"
+        },
+        {
+            "name": "Complaints",
+            "description": "Gestion des réclamations"
         },
         {
             "name": "Email Notification Preferences",

@@ -238,6 +238,13 @@ Route::prefix('v1')->group(function () {
             // Call Notes
             Route::post('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'store']);
             Route::get('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'index']);
+
+            // Créer une réclamation
+            Route::post('/complaints', [App\Http\Controllers\Api\V1\ComplaintController::class, 'store']);
+            Route::get('/complaints', [App\Http\Controllers\Api\V1\ComplaintController::class, 'index']);
+            Route::put('/complaints/{id}', [App\Http\Controllers\Api\V1\ComplaintController::class, 'update']);
+            Route::post('/complaints/{id}/resolve', [App\Http\Controllers\Api\V1\ComplaintController::class, 'resolve']);
+            Route::post('/complaints/{id}/close', [App\Http\Controllers\Api\V1\ComplaintController::class, 'close']);
         });
     });
 });

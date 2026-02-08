@@ -148,26 +148,70 @@ class UserController extends BaseApiController
         $validated['status'] = $validated['status'] ?? 'active';
         $validated['name'] = $validated['first_name'] . ' ' . $validated['last_name'];
 
-        $user = User::create($validated);
+        $emailSent = true;
+        $emailError = null;
 
-        // Assign role
-        if (isset($validated['role_id'])) {
-            $role = Role::find($validated['role_id']);
-            if ($role) {
-                $user->assignRole($role->name);
+        try {
+            $user = User::create($validated);
+
+            // Assign role
+            if (isset($validated['role_id'])) {
+                $role = Role::find($validated['role_id']);
+                if ($role) {
+                    $user->assignRole($role->name);
+                }
+            }
+
+            $user->load(['roles']);
+
+            Log::info('Utilisateur créé', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'created_by' => auth()->id(),
+                'created_by_name' => auth()->user()->name
+            ]);
+
+        } catch (\Exception $e) {
+            // Si c'est une erreur d'email, on continue mais on note l'erreur
+            if (str_contains($e->getMessage(), 'Expected response code 354') ||
+                str_contains($e->getMessage(), 'RCPT commands were rejected')) {
+
+                $emailSent = false;
+                $emailError = $e->getMessage();
+
+                // L'utilisateur devrait quand même être créé, on le récupère
+                $user = User::where('email', $validated['email'])->first();
+
+                if (!$user) {
+                    throw $e; // Si l'utilisateur n'existe pas, l'erreur est ailleurs
+                }
+
+                // Assign role si l'utilisateur existe
+                if (isset($validated['role_id']) && $user) {
+                    $role = Role::find($validated['role_id']);
+                    if ($role) {
+                        $user->assignRole($role->name);
+                    }
+                }
+
+                $user->load(['roles']);
+
+                Log::warning('Utilisateur créé mais email échoué', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'email_error' => $emailError,
+                    'created_by' => auth()->id()
+                ]);
+            } else {
+                throw $e; // Autres erreurs, on les relance
             }
         }
 
-        $user->load(['roles']);
+        $message = $emailSent
+            ? 'Utilisateur créé avec succès'
+            : 'Utilisateur créé avec succès mais l\'envoi de l\'email de notification a échoué. L\'utilisateur peut se connecter normalement.';
 
-        Log::info('Utilisateur créé', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'created_by' => auth()->id(),
-            'created_by_name' => auth()->user()->name
-        ]);
-
-        return $this->successResponse($user, 'Utilisateur créé avec succès', 201);
+        return $this->successResponse($user, $message, 201);
     }
 
     /**
@@ -335,6 +379,17 @@ class UserController extends BaseApiController
     {
         $newPassword = Str::random(8);
         $user->update(['password' => Hash::make($newPassword)]);
+
+        // Envoyer notification de réinitialisation de mot de passe
+        try {
+            \App\Observers\UserObserver::notifyPasswordReset($user, $newPassword, auth()->user()->name);
+        } catch (\Exception $e) {
+            Log::warning('Erreur lors de l\'envoi de la notification de reset password', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         Log::info('Mot de passe réinitialisé', [
             'user_id' => $user->id,

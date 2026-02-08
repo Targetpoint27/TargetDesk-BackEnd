@@ -34,79 +34,118 @@ class SupplierPermissionsSeeder extends Seeder
                     'name' => 'suppliers.create',
                     'display_name' => 'Créer des fournisseurs',
                     'description' => 'Permet de créer de nouveaux fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'create',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.edit',
                     'display_name' => 'Modifier les fournisseurs',
                     'description' => 'Permet de modifier les informations des fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'edit',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.delete',
                     'display_name' => 'Supprimer des fournisseurs',
                     'description' => 'Permet de supprimer des fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'delete',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.manage',
                     'display_name' => 'Gérer les fournisseurs',
                     'description' => 'Accès complet à la gestion des fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'manage',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.contracts.view',
                     'display_name' => 'Voir les contrats fournisseurs',
                     'description' => 'Permet de consulter les contrats des fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'contracts_view',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.contracts.manage',
                     'display_name' => 'Gérer les contrats fournisseurs',
                     'description' => 'Permet de gérer les contrats des fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'contracts_manage',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.payments.view',
                     'display_name' => 'Voir les paiements fournisseurs',
                     'description' => 'Permet de consulter les paiements aux fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'payments_view',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.payments.manage',
                     'display_name' => 'Gérer les paiements fournisseurs',
                     'description' => 'Permet de gérer les paiements aux fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'payments_manage',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.orders.view',
                     'display_name' => 'Voir les commandes fournisseurs',
                     'description' => 'Permet de consulter les commandes aux fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'orders_view',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.orders.create',
                     'display_name' => 'Créer des commandes fournisseurs',
                     'description' => 'Permet de créer des commandes aux fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'orders_create',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.orders.manage',
                     'display_name' => 'Gérer les commandes fournisseurs',
                     'description' => 'Permet de gérer les commandes aux fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'orders_manage',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.reports.view',
                     'display_name' => 'Voir les rapports fournisseurs',
                     'description' => 'Permet de consulter les rapports sur les fournisseurs',
-                    'module' => 'suppliers'
+                    'module' => 'suppliers',
+                    'action' => 'reports_view',
+                    'scope' => 'all',
+                    'is_active' => true
                 ],
                 [
                     'name' => 'suppliers.export',
                     'display_name' => 'Exporter les fournisseurs',
                     'description' => 'Permet d\'exporter la liste des fournisseurs',
                     'module' => 'suppliers',
+                    'action' => 'export',
+                    'scope' => 'all',
+                    'is_active' => true
                 ]
             ];
 

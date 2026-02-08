@@ -78,8 +78,22 @@ class ProcessAppointmentEmailReminders extends Command
                     continue;
                 }
 
-                if (!$reminder->user || !$reminder->user->email) {
-                    $reminder->markAsFailed('User email not found');
+                // Vérifier si le rendez-vous est passé
+                if ($reminder->appointment->scheduled_at <= now()) {
+                    $reminder->markAsFailed('Appointment has already passed');
+                    $failed++;
+                    continue;
+                }
+
+                // Vérifier si le rendez-vous est annulé ou terminé
+                if (in_array($reminder->appointment->status, ['cancelled', 'completed'])) {
+                    $reminder->markAsFailed('Appointment is ' . $reminder->appointment->status);
+                    $failed++;
+                    continue;
+                }
+
+                if (!$reminder->user && !$reminder->participant) {
+                    $reminder->markAsFailed('No user or participant found');
                     $failed++;
                     continue;
                 }

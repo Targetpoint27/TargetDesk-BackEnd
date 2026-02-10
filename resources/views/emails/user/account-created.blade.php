@@ -3,26 +3,20 @@
 
 Bonjour **{{ $user->name }}**,
 
-Votre compte TargetDesk CRM a été créé avec succès ! Nous sommes ravis de vous accueillir dans notre plateforme de gestion de la relation client.
+**C'est parti ! Votre compte TargetDesk est prêt.** 🚀
+Nous sommes enchantés de vous compter parmi nous. Toute l'équipe se réjouit de vous aider à transformer vos relations clients en véritables succès.
 
 ## Vos informations de connexion
 
 @component('mail::panel')
 **Email :** {{ $user->email }}
-**Mot de passe temporaire :** {{ $temporaryPassword }}
-**Rôle :** {{ $user->roles->first()->name ?? 'Utilisateur' }}
+**Mot de passe :** {{ $password }}
+**Rôle :** {{ $userRole }}
 @endcomponent
 
-@component('mail::button', ['url' => config('app.frontend_url') . '/login', 'color' => 'success'])
-Se connecter à TargetDesk
+@component('mail::button', ['url' => $loginUrl, 'color' => 'primary'])
+Commencer maintenant
 @endcomponent
-
-## Sécurité importante
-
-Pour votre sécurité, veuillez :
-- **Changer votre mot de passe** lors de votre première connexion
-- **Activer l'authentification à deux facteurs** si disponible
-- **Ne jamais partager vos identifiants** avec qui que ce soit
 
 ## Besoin d'aide ?
 

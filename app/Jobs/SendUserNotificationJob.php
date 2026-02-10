@@ -71,9 +71,11 @@ class SendUserNotificationJob implements ShouldQueue
     {
         switch ($this->notificationType) {
             case 'account_created':
+                // Ensure roles are loaded for the email template
+                $this->user->load('roles');
                 return new AccountCreatedMail(
                     $this->user,
-                    $this->data['temporary_password']
+                    $this->data['password']
                 );
 
             case 'account_deactivated':

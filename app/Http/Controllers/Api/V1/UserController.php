@@ -144,6 +144,9 @@ class UserController extends BaseApiController
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
+
+        // Sauvegarder le mot de passe en clair avant hashage pour l'email
+        $plainPassword = $validated['password'];
         $validated['password'] = Hash::make($validated['password']);
         $validated['status'] = $validated['status'] ?? 'active';
         $validated['name'] = $validated['first_name'] . ' ' . $validated['last_name'];
@@ -163,6 +166,27 @@ class UserController extends BaseApiController
             }
 
             $user->load(['roles']);
+
+            // Envoyer l'email de bienvenue maintenant que tout est configuré
+            try {
+                \App\Jobs\SendUserNotificationJob::dispatch($user, 'account_created', [
+                    'password' => $plainPassword
+                ]);
+
+                Log::info('Email de bienvenue envoyé', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+            } catch (\Exception $emailException) {
+                $emailSent = false;
+                $emailError = $emailException->getMessage();
+
+                Log::warning('Erreur envoi email de bienvenue', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'error' => $emailException->getMessage()
+                ]);
+            }
 
             Log::info('Utilisateur créé', [
                 'user_id' => $user->id,

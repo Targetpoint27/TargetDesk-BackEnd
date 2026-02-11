@@ -14,34 +14,13 @@ class UserObserver
      */
     public function created(User $user)
     {
-        // Génère un mot de passe temporaire
-        $temporaryPassword = Str::random(12);
+        // L'email est envoyé manuellement depuis le controller
+        // après l'assignation du rôle pour s'assurer que toutes les données sont disponibles
 
-        // Ne pas écraser le mot de passe s'il existe déjà
-        // Hash et sauvegarde le mot de passe temporaire
-        // $user->password = bcrypt($temporaryPassword);
-        // $user->saveQuietly(); // Évite les événements récursifs
-
-        // Envoie la notification de création de compte (avec gestion d'erreur)
-        try {
-            SendUserNotificationJob::dispatch($user, 'account_created', [
-                'temporary_password' => $temporaryPassword
-            ]);
-
-            Log::info('Notification de création de compte programmée', [
-                'user_id' => $user->id,
-                'email' => $user->email
-            ]);
-        } catch (\Exception $e) {
-            Log::warning('Erreur lors de l\'envoi de la notification de création', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'error' => $e->getMessage()
-            ]);
-
-            // Relancer l'erreur pour que le controller puisse la gérer
-            throw new \Exception('Expected response code 354 but got code "503", with message "' . $e->getMessage() . '"');
-        }
+        Log::info('Utilisateur créé - email sera envoyé depuis le controller', [
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
     }
 
     /**

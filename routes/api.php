@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\UserRoleController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\EmailNotificationPreferenceController;
+use App\Http\Controllers\Api\V1\RingoverCallController;
 
 /*
 |--------------------------------------------------------------------------
@@ -286,6 +287,8 @@ Route::prefix('v1')->group(function () {
             Route::put('/users/{id}/toggle-status', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'toggleStatus']);
             Route::post('/users/{id}/reset-password', [App\Http\Controllers\Api\V1\Admin\UserController::class, 'resetPassword']);
         });
+
+        Route::get('/ringover/calls', [RingoverCallController::class, 'index']);
     });
 });
 

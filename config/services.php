@@ -30,4 +30,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'ringover' => [
+        'key' => env('RINGOVER_API_KEY'),
+        'url' => env('RINGOVER_API_URL', 'https://public-api.ringover.com/v2'),
+        'timeout' => env('RINGOVER_API_TIMEOUT', 30),
+    ],
 ];

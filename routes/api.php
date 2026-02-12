@@ -215,18 +215,16 @@ Route::prefix('v1')->group(function () {
         Route::get('email-reminders/sent', [EmailNotificationPreferenceController::class, 'getSentReminders']);
         Route::get('email-reminders/statistics', [EmailNotificationPreferenceController::class, 'getStatistics']);
 
-        // Calls routes (EPIC-01)
-        Route::prefix('call-center')->group(function () {
+        // CALL CENTER - AGENT LEVEL (All authenticated users with call center roles)
+        Route::middleware('role:agent,supervisor,manager,admin,super_admin')->prefix('call-center')->group(function () {
             Route::post('/calls', [App\Http\Controllers\Api\V1\CallController::class, 'store']);
-
-            // List/filter calls - MUST be first!
             Route::get('/calls', [App\Http\Controllers\Api\V1\CallController::class, 'index']);
             Route::get('/calls/my-queue', [App\Http\Controllers\Api\V1\CallController::class, 'myQueue']);
-            Route::get('/calls/department-queue', [App\Http\Controllers\Api\V1\CallController::class, 'departmentQueue']);
             Route::get('/calls/search', [App\Http\Controllers\Api\V1\CallController::class, 'search']);
             Route::get('/calls/callbacks', [App\Http\Controllers\Api\V1\CallController::class, 'callbacks']);
             Route::get('/reports/daily', [App\Http\Controllers\Api\V1\CallReportController::class, 'dailyActivity']);
-
+            Route::get('/calls/department-queue', [App\Http\Controllers\Api\V1\CallController::class, 'departmentQueue']);
+            
             Route::get('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'show']);
             Route::put('/calls/{id}', [App\Http\Controllers\Api\V1\CallController::class, 'update']);
             Route::put('/calls/{id}/status', [App\Http\Controllers\Api\V1\CallController::class, 'changeStatus']);
@@ -236,21 +234,19 @@ Route::prefix('v1')->group(function () {
             Route::post('/calls/missed', [App\Http\Controllers\Api\V1\CallController::class, 'storeMissedCall']);
             Route::post('/calls/{id}/callback-result', [App\Http\Controllers\Api\V1\CallController::class, 'storeCallbackResult']);
             Route::post('/calls/{id}/link-client', [App\Http\Controllers\Api\V1\CallController::class, 'linkClient']);
-
+            
             // Call Notes
             Route::post('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'store']);
             Route::get('/calls/{id}/notes', [App\Http\Controllers\Api\V1\CallNoteController::class, 'index']);
-
-            // Créer une réclamation
-            Route::post('/complaints', [App\Http\Controllers\Api\V1\ComplaintController::class, 'store']);
-            Route::get('/complaints', [App\Http\Controllers\Api\V1\ComplaintController::class, 'index']);
-            Route::put('/complaints/{id}', [App\Http\Controllers\Api\V1\ComplaintController::class, 'update']);
+            
+            // Complaints
+            Route::apiResource('complaints', App\Http\Controllers\Api\V1\ComplaintController::class);
             Route::post('/complaints/{id}/resolve', [App\Http\Controllers\Api\V1\ComplaintController::class, 'resolve']);
             Route::post('/complaints/{id}/close', [App\Http\Controllers\Api\V1\ComplaintController::class, 'close']);
         });
 
-        // Supervisor Routes (Epic 8)
-        Route::prefix('call-center/supervisor')->group(function () {
+        // SUPERVISOR ROUTES (supervisor, manager, admin, super_admin only)
+        Route::middleware('role:supervisor,manager,admin,super_admin')->prefix('call-center/supervisor')->group(function () {
             Route::get('/team-view', [App\Http\Controllers\Api\V1\SupervisorController::class, 'teamView']);
             Route::get('/team-stats', [App\Http\Controllers\Api\V1\SupervisorController::class, 'teamStats']);
             Route::put('/calls/{id}/reassign', [App\Http\Controllers\Api\V1\SupervisorController::class, 'reassign']);
@@ -258,13 +254,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/complaints', [App\Http\Controllers\Api\V1\SupervisorController::class, 'complaintsView']);
         });
 
-        // Manager Routes (Epic 9)
-        Route::prefix('call-center/manager')->group(function () {
+        // MANAGER ROUTES (manager, admin, super_admin only)
+        Route::middleware('role:manager,admin,super_admin')->prefix('call-center/manager')->group(function () {
             Route::get('/dashboard', [App\Http\Controllers\Api\V1\ManagerReportController::class, 'dashboard']);
         });
 
-        // Admin routes
-        Route::prefix('admin')->group(function () {
+        // ADMIN ROUTES (admin, super_admin only)
+        Route::middleware('role:admin,super_admin')->prefix('admin')->group(function () {
             // Departments
             Route::get('/departments', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'index']);
             Route::post('/departments', [App\Http\Controllers\Api\V1\Admin\DepartmentController::class, 'store']);

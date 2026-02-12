@@ -18,85 +18,6 @@ use Illuminate\Support\Facades\Log;
  */
 class ComplaintController extends BaseApiController
 {
-    /**
-     * @OA\Post(
-     * path="/api/v1/call-center/complaints",
-     * summary="Créer une réclamation",
-     * description="Enregistre une nouvelle réclamation liée à un appel avec calcul automatique du SLA.",
-     * tags={"Complaints"},
-     * security={{"sanctum":{}}},
-     * @OA\RequestBody(
-     * required=true,
-     * @OA\JsonContent(
-     * required={"call_id", "category", "severity", "description"},
-     * @OA\Property(property="call_id", type="integer", example=1),
-     * @OA\Property(property="client_id", type="integer", example=5, description="Optionnel, sinon pris de l'appel"),
-     * @OA\Property(property="category", type="string", enum={"produit_defectueux", "service_insatisfaisant", "livraison_retard", "facturation_erronee", "comportement_personnel", "autre"}),
-     * @OA\Property(property="severity", type="string", enum={"faible", "moyen", "eleve", "critique"}),
-     * @OA\Property(property="description", type="string", example="Le client a reçu le mauvais produit et le livreur était impoli.")
-     * )
-     * ),
-     * @OA\Response(
-     * response=201,
-     * description="Réclamation créée avec succès",
-     * @OA\JsonContent(
-     * @OA\Property(property="success", type="boolean", example=true),
-     * @OA\Property(property="data", type="object",
-     * @OA\Property(property="complaint_id", type="string", example="REC-2026-0001"),
-     * @OA\Property(property="sla_deadline", type="string", format="date-time"),
-     * @OA\Property(property="status", type="string", example="ouverte")
-     * )
-     * )
-     * )
-     * )
-     */
-    public function store(StoreComplaintRequest $request)
-    {
-        try {
-            $validated = $request->validated();
-            
-            // 1. Get the Call to link data
-            $call = Call::findOrFail($validated['call_id']);
-            
-            // 2. Determine Client (Use passed ID, or fallback to Call's client)
-            $clientId = $validated['client_id'] ?? $call->client_id;
-
-            // 3. Calculate SLA Deadline based on Severity
-            $slaDeadline = $this->calculateSla($validated['severity']);
-
-            // 4. Create the Complaint
-            $complaint = Complaint::create([
-                'complaint_id' => Complaint::generateComplaintId(),
-                'call_id' => $call->id,
-                'client_id' => $clientId,
-                'category' => $validated['category'],
-                'severity' => $validated['severity'],
-                'description' => $validated['description'],
-                'status' => 'ouverte',
-                'sla_deadline' => $slaDeadline,
-                'created_by' => Auth::id(),
-                // Assign to creator initially? Or leave unassigned for a manager to dispatch?
-                // Let's leave unassigned for now (US-CC-024 usually handles dispatch)
-                'assigned_to' => null 
-            ]);
-
-            Log::info('Réclamation créée', [
-                'complaint_id' => $complaint->complaint_id,
-                'severity' => $validated['severity'],
-                'sla' => $slaDeadline
-            ]);
-
-            return $this->successResponse(
-                $complaint,
-                'Réclamation enregistrée avec succès. SLA calculé.',
-                201
-            );
-
-        } catch (\Exception $e) {
-            Log::error('Erreur création réclamation', ['error' => $e->getMessage()]);
-            return $this->errorResponse('Erreur serveur lors de la création', 500);
-        }
-    }
 
     /**
      * Logic to determine SLA Date based on Severity
@@ -216,69 +137,6 @@ class ComplaintController extends BaseApiController
     }
 
     /**
-     * @OA\Put(
-     * path="/api/v1/call-center/complaints/{id}",
-     * summary="Traiter une réclamation",
-     * description="Met à jour les informations de traitement, le statut et l'assignation.",
-     * tags={"Complaints"},
-     * security={{"sanctum":{}}},
-     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     * @OA\RequestBody(
-     * required=true,
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="string", enum={"en_analyse", "en_attente_client"}),
-     * @OA\Property(property="assigned_to", type="integer", example=1),
-     * @OA\Property(property="root_cause", type="string", example="Erreur de picking à l'entrepôt"),
-     * @OA\Property(property="actions_taken", type="string", example="Contacté l'entrepôt pour vérification"),
-     * @OA\Property(property="proposed_solution", type="string", example="Envoi d'un nouveau produit en express")
-     * )
-     * ),
-     * @OA\Response(response=200, description="Réclamation mise à jour")
-     * )
-     */
-    public function update(\App\Http\Requests\UpdateComplaintRequest $request, $id)
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-            $validated = $request->validated();
-            
-            // Capture old state for audit
-            $oldStatus = $complaint->status;
-            
-            // Update fields
-            $complaint->fill($validated);
-            
-            // Logic: If I update it, and it's unassigned, assign it to me?
-            // Optional, but good UX. For now, we trust the 'assigned_to' input.
-            
-            if ($complaint->isDirty()) {
-                $complaint->save();
-                
-                // AUDIT LOG (Essential for US-CC-025 "Historique complet")
-                // We use the existing CallStatusHistory or create a new ComplaintHistory table?
-                // For simplicity, we'll log to the standard Laravel Log, but in a real app,
-                // you might want a 'complaint_history' table similar to 'call_status_history'.
-                
-                Log::info('Réclamation mise à jour', [
-                    'complaint_id' => $complaint->complaint_id,
-                    'updated_by' => Auth::id(),
-                    'changes' => $complaint->getChanges()
-                ]);
-            }
-
-            return $this->successResponse(
-                $complaint->fresh(['assignedAgent']), 
-                'Traitement mis à jour avec succès', 
-                200
-            );
-
-        } catch (\Exception $e) {
-            Log::error('Erreur mise à jour réclamation', ['error' => $e->getMessage()]);
-            return $this->errorResponse('Erreur serveur', 500);
-        }
-    }
-
-    /**
      * @OA\Post(
      * path="/api/v1/call-center/complaints/{id}/resolve",
      * summary="Résoudre une réclamation",
@@ -391,6 +249,148 @@ class ComplaintController extends BaseApiController
         } catch (\Exception $e) {
             Log::error('Erreur clôture réclamation', ['error' => $e->getMessage()]);
             return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     * path="/api/v1/call-center/complaints/{id}",
+     * summary="Détails d'une réclamation",
+     * description="Récupère les informations complètes d'une réclamation spécifique par son ID.",
+     * tags={"Complaints"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID de la réclamation",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Détails récupérés avec succès",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="data", type="object"),
+     * @OA\Property(property="message", type="string", example="Détails de la réclamation récupérés")
+     * )
+     * ),
+     * @OA\Response(response=404, description="Réclamation introuvable")
+     * )
+     */
+    public function show($id)
+    {
+        try {
+            // We load the client, assigned agent, and the creator to fill the sidebar context
+            $complaint = Complaint::with(['client', 'assignedAgent', 'creator'])->findOrFail($id);
+
+            // Logic for Meta data (similar to index) so the details page has status labels
+            $data = $complaint->toArray();
+            $deadline = $complaint->sla_deadline;
+            $isClosed = in_array($complaint->status, ['resolue', 'cloture']);
+            
+            $data['is_overdue'] = !$isClosed && $deadline->isPast();
+            $data['status_label'] = str_replace('_', ' ', ucfirst($complaint->status));
+            $data['category_label'] = str_replace('_', ' ', ucfirst($complaint->category));
+
+            return $this->successResponse($data, 'Détails de la réclamation récupérés');
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->errorResponse('Réclamation introuvable', 404);
+        } catch (\Exception $e) {
+            Log::error('Erreur show réclamation', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
+
+    /**
+     * @OA\Put(
+     * path="/api/v1/call-center/complaints/{id}",
+     * summary="Mettre à jour l'analyse d'une réclamation",
+     * description="Enregistre la cause racine, les actions menées et la solution proposée.",
+     * tags={"Complaints"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * @OA\Property(property="root_cause", type="string"),
+     * @OA\Property(property="actions_taken", type="string"),
+     * @OA\Property(property="proposed_solution", type="string")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Analyse enregistrée")
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $complaint = Complaint::findOrFail($id);
+
+            // Update investigation data
+            $complaint->root_cause = $request->input('root_cause');
+            $complaint->actions_taken = $request->input('actions_taken');
+            $complaint->proposed_solution = $request->input('proposed_solution');
+
+            // Business Rule: Automatically move to 'en_analyse' status
+            if ($complaint->status === 'ouverte') {
+                $complaint->status = 'en_analyse';
+            }
+
+            $complaint->save();
+
+            return $this->successResponse($complaint, 'Analyse mise à jour avec succès');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur update réclamation', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur serveur', 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/complaints",
+     * summary="Créer une réclamation",
+     * description="Enregistre une nouvelle réclamation liée à un appel.",
+     * tags={"Complaints"},
+     * security={{"sanctum":{}}},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(ref="#/components/schemas/StoreComplaintRequest")
+     * ),
+     * @OA\Response(response=201, description="Réclamation créée")
+     * )
+     */
+    public function store(StoreComplaintRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+
+            // Create the record
+            $complaint = new Complaint();
+            
+            // Generate a unique ID (e.g., REC-2026-0009)
+            $count = Complaint::count() + 1;
+            $complaint->complaint_id = 'REC-' . now()->format('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            
+            $complaint->call_id = $validated['call_id'];
+            $complaint->client_id = $validated['client_id'] ?? null;
+            $complaint->category = $validated['category'];
+            $complaint->severity = $validated['severity'];
+            $complaint->description = $validated['description'];
+            $complaint->status = 'ouverte';
+            
+            // Set SLA deadline using your existing private helper
+            $complaint->sla_deadline = $this->calculateSla($validated['severity']);
+            
+            $complaint->created_by = Auth::id();
+            $complaint->save();
+
+            return $this->successResponse($complaint, 'Réclamation enregistrée avec succès', 201);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur création réclamation', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur lors de la création', 500);
         }
     }
 }

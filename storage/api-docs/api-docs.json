@@ -6423,157 +6423,21 @@
                     "Complaints"
                 ],
                 "summary": "Créer une réclamation",
-                "description": "Enregistre une nouvelle réclamation liée à un appel avec calcul automatique du SLA.",
+                "description": "Enregistre une nouvelle réclamation liée à un appel.",
                 "operationId": "910064d134af330c6b27967b05d4ede4",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "call_id",
-                                    "category",
-                                    "severity",
-                                    "description"
-                                ],
-                                "properties": {
-                                    "call_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "client_id": {
-                                        "description": "Optionnel, sinon pris de l'appel",
-                                        "type": "integer",
-                                        "example": 5
-                                    },
-                                    "category": {
-                                        "type": "string",
-                                        "enum": [
-                                            "produit_defectueux",
-                                            "service_insatisfaisant",
-                                            "livraison_retard",
-                                            "facturation_erronee",
-                                            "comportement_personnel",
-                                            "autre"
-                                        ]
-                                    },
-                                    "severity": {
-                                        "type": "string",
-                                        "enum": [
-                                            "faible",
-                                            "moyen",
-                                            "eleve",
-                                            "critique"
-                                        ]
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Le client a reçu le mauvais produit et le livreur était impoli."
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/StoreComplaintRequest"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Réclamation créée avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "complaint_id": {
-                                                    "type": "string",
-                                                    "example": "REC-2026-0001"
-                                                },
-                                                "sla_deadline": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "status": {
-                                                    "type": "string",
-                                                    "example": "ouverte"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/call-center/complaints/{id}": {
-            "put": {
-                "tags": [
-                    "Complaints"
-                ],
-                "summary": "Traiter une réclamation",
-                "description": "Met à jour les informations de traitement, le statut et l'assignation.",
-                "operationId": "7d6da4ee830d65a0801bd5065fe68706",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "en_analyse",
-                                            "en_attente_client"
-                                        ]
-                                    },
-                                    "assigned_to": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "root_cause": {
-                                        "type": "string",
-                                        "example": "Erreur de picking à l'entrepôt"
-                                    },
-                                    "actions_taken": {
-                                        "type": "string",
-                                        "example": "Contacté l'entrepôt pour vérification"
-                                    },
-                                    "proposed_solution": {
-                                        "type": "string",
-                                        "example": "Envoi d'un nouveau produit en express"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Réclamation mise à jour"
+                        "description": "Réclamation créée"
                     }
                 },
                 "security": [
@@ -6682,6 +6546,109 @@
                 "responses": {
                     "200": {
                         "description": "Réclamation clôturée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/complaints/{id}": {
+            "get": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Détails d'une réclamation",
+                "description": "Récupère les informations complètes d'une réclamation spécifique par son ID.",
+                "operationId": "99916570361f8a3181f5ef0a5652b902",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la réclamation",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Détails de la réclamation récupérés"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Réclamation introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Complaints"
+                ],
+                "summary": "Mettre à jour l'analyse d'une réclamation",
+                "description": "Enregistre la cause racine, les actions menées et la solution proposée.",
+                "operationId": "7d6da4ee830d65a0801bd5065fe68706",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "root_cause": {
+                                        "type": "string"
+                                    },
+                                    "actions_taken": {
+                                        "type": "string"
+                                    },
+                                    "proposed_solution": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Analyse enregistrée"
                     }
                 },
                 "security": [
@@ -10620,6 +10587,57 @@
     },
     "components": {
         "schemas": {
+            "StoreComplaintRequest": {
+                "title": "StoreComplaintRequest",
+                "description": "Requête pour la création d'une nouvelle réclamation",
+                "required": [
+                    "call_id",
+                    "category",
+                    "severity",
+                    "description"
+                ],
+                "properties": {
+                    "call_id": {
+                        "description": "ID de l'appel lié",
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "client_id": {
+                        "description": "ID du client",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "produit_defectueux",
+                            "service_insatisfaisant",
+                            "livraison_retard",
+                            "facturation_erronee",
+                            "comportement_personnel",
+                            "autre"
+                        ],
+                        "example": "service_insatisfaisant"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "faible",
+                            "moyen",
+                            "eleve",
+                            "critique"
+                        ],
+                        "example": "eleve"
+                    },
+                    "description": {
+                        "description": "Description détaillée du litige",
+                        "type": "string",
+                        "example": "Le client n'a pas aimé son produit."
+                    }
+                },
+                "type": "object"
+            },
             "ClientDocument": {
                 "title": "Document Client",
                 "description": "Document attaché à un client",

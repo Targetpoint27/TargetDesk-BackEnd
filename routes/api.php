@@ -24,7 +24,16 @@ use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\EmailNotificationPreferenceController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\TaskController;
+use App\Http\Controllers\Api\V1\TaskCommentController;
 use App\Http\Controllers\Api\V1\TaskTagController;
+use App\Http\Controllers\Api\V1\TimeTrackingController;
+use App\Http\Controllers\Api\V1\UserTimeTrackingController;
+use App\Http\Controllers\Api\V1\ProjectTimeTrackingController;
+use App\Http\Controllers\Api\V1\TaskFileController;
+use App\Http\Controllers\Api\V1\TaskNotificationController;
+use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\TaskDifficultyController;
+use App\Http\Controllers\Api\V1\TaskViewController;
 
 /*
 |--------------------------------------------------------------------------

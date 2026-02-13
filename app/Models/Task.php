@@ -36,6 +36,13 @@ class Task extends Model
         'actual_hours' => 'decimal:2'
     ];
 
+    protected $appends = [
+        'comments_count',
+        'files_count',
+        'has_active_difficulties',
+        'progress_percentage'
+    ];
+
     // Constants pour les statuts
     const STATUS_A_FAIRE = 'a_faire';
     const STATUS_EN_COURS = 'en_cours';
@@ -292,5 +299,10 @@ class Task extends Model
         return $this->difficulties()
             ->whereIn('status', ['open', 'in_progress'])
             ->exists();
+    }
+
+    public function getProgressPercentageAttribute(): float
+    {
+        return $this->getProgressPercentage();
     }
 }

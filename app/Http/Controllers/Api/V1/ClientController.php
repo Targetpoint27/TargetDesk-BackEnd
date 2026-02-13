@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\BaseApiController;
 use App\Models\Client;
+use App\Http\Requests\Api\UpdateClientKycRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -69,7 +70,20 @@ class ClientController extends BaseApiController
             'siret' => 'nullable|string|size:14|unique:clients,siret',
             'sector' => 'nullable|string|max:100',
             'website' => 'nullable|url',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+
+            // Champs KYC
+            'brand_workshop' => 'nullable|string|max:255',
+            'legal_form' => 'nullable|string|max:255',
+            'legal_representative_first_name' => 'nullable|string|max:255',
+            'legal_representative_last_name' => 'nullable|string|max:255',
+            'beneficial_owner_first_name' => 'nullable|string|max:255',
+            'beneficial_owner_last_name' => 'nullable|string|max:255',
+            'bank' => 'nullable|string|max:255',
+            'bank_account_type' => 'nullable|string|max:255',
+            'payment_moment' => 'nullable|string|max:255',
+            'payment_in_foreign_currency' => 'nullable|boolean',
+            'has_bank_identity_statement' => 'nullable|boolean'
         ], [
             'name.required' => 'Le nom/raison sociale est requis',
             'type.required' => 'Le type est requis',
@@ -79,7 +93,9 @@ class ClientController extends BaseApiController
             'email.unique' => 'Cet email est déjà utilisé',
             'siret.size' => 'Le SIRET doit contenir exactement 14 caractères',
             'siret.unique' => 'Ce SIRET est déjà utilisé',
-            'website.url' => 'Le site web doit être une URL valide'
+            'website.url' => 'Le site web doit être une URL valide',
+            'payment_in_foreign_currency.boolean' => 'Le champ "paiement en devise" doit être true ou false.',
+            'has_bank_identity_statement.boolean' => 'Le champ "relevé d\'identité bancaire" doit être true ou false.'
         ]);
 
         $validated['created_by'] = auth()->id();
@@ -470,7 +486,7 @@ class ClientController extends BaseApiController
      */
     public function show($id): JsonResponse
     {
-        $client = Client::with(['creator:id,name', 'categories'])
+        $client = Client::with(['creator:id,name', 'categories', 'kycDocuments'])
                         ->where('is_active', true)
                         ->find($id);
 
@@ -519,7 +535,7 @@ class ClientController extends BaseApiController
      *     )
      * )
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateClientKycRequest $request, $id): JsonResponse
     {
         $client = Client::find($id);
 
@@ -527,19 +543,7 @@ class ClientController extends BaseApiController
             return $this->errorResponse('Client non trouvé', 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|required|in:particulier,entreprise',
-            'email' => 'sometimes|required|email|unique:clients,email,' . $id,
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'siret' => 'nullable|string|size:14|unique:clients,siret,' . $id,
-            'sector' => 'nullable|string|max:100',
-            'website' => 'nullable|url',
-            'notes' => 'nullable|string',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id'
-        ]);
+        $validated = $request->validated();
 
         // Séparer les catégories du reste des données
         $categories = $validated['category_ids'] ?? null;

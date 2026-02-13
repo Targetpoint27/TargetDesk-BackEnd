@@ -25,11 +25,25 @@ class Client extends Model
         'website',
         'notes',
         'is_active',
-        'created_by'
+        'created_by',
+        // Nouveaux champs KYC
+        'brand_workshop',
+        'legal_form',
+        'legal_representative_first_name',
+        'legal_representative_last_name',
+        'beneficial_owner_first_name',
+        'beneficial_owner_last_name',
+        'bank',
+        'bank_account_type',
+        'payment_moment',
+        'payment_in_foreign_currency',
+        'has_bank_identity_statement'
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'payment_in_foreign_currency' => 'boolean',
+        'has_bank_identity_statement' => 'boolean'
     ];
 
     /**
@@ -92,6 +106,22 @@ class Client extends Model
     public function categoriesByType($type): BelongsToMany
     {
         return $this->categories()->where('categories.type', $type);
+    }
+
+    /**
+     * Get KYC documents for this client
+     */
+    public function kycDocuments(): HasMany
+    {
+        return $this->hasMany(ClientKycDocument::class);
+    }
+
+    /**
+     * Get specific KYC document by type
+     */
+    public function getKycDocument($type)
+    {
+        return $this->kycDocuments()->where('document_type', $type)->first();
     }
 
     /**

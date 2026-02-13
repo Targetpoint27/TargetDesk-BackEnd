@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\CallLogController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\ClientTimelineController;
 use App\Http\Controllers\Api\V1\ClientDocumentController;
+use App\Http\Controllers\Api\V1\ClientKycDocumentController;
 use App\Http\Controllers\Api\V1\SupplierDocumentController;
 use App\Http\Controllers\Api\V1\CommercialDashboardController;
 use App\Http\Controllers\Api\V1\PersonalDashboardController;
@@ -147,6 +148,15 @@ Route::prefix('v1')->group(function () {
         Route::get('clients/{client}/documents/{document}/download', [ClientDocumentController::class, 'download'])->name('clients.documents.download');
         Route::get('clients/{client}/documents/{document}/preview', [ClientDocumentController::class, 'preview'])->name('clients.documents.preview');
         Route::get('clients/{client}/documents/{document}/versions', [ClientDocumentController::class, 'versions'])->name('clients.documents.versions');
+
+        // Client KYC documents management
+        Route::get('clients/{client}/kyc-documents', [ClientKycDocumentController::class, 'index'])->name('clients.kyc-documents.index');
+        Route::post('clients/{client}/kyc-documents', [ClientKycDocumentController::class, 'store'])->name('clients.kyc-documents.store');
+        Route::get('clients/{client}/kyc-documents/{document}', [ClientKycDocumentController::class, 'show'])->name('clients.kyc-documents.show');
+        Route::delete('clients/{client}/kyc-documents/{document}', [ClientKycDocumentController::class, 'destroy'])->name('clients.kyc-documents.destroy');
+        Route::get('clients/{client}/kyc-documents/{document}/download', [ClientKycDocumentController::class, 'download'])->name('clients.kyc-documents.download');
+        Route::get('clients/{client}/kyc-documents/{document}/preview', [ClientKycDocumentController::class, 'preview'])->name('clients.kyc-documents.preview');
+        Route::get('kyc-document-types', [ClientKycDocumentController::class, 'getDocumentTypes'])->name('kyc-document-types');
 
         // Supplier documents management
         Route::get('suppliers/{supplier}/documents', [SupplierDocumentController::class, 'index'])->name('suppliers.documents.index');

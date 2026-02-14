@@ -62,9 +62,9 @@ class ClientController extends BaseApiController
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:particulier,entreprise',
-            'email' => 'required|email|unique:clients,email',
-            'phone' => 'nullable|string|max:20',
+            'type' => 'nullable|in:particulier,entreprise',
+            'email' => 'nullable|string',  // Supprimer validation email
+            'phone' => 'nullable|string|max:100',  // Augmenter limite téléphone
             'address' => 'nullable|string',
             'siret' => 'nullable|string|size:14|unique:clients,siret',
             'sector' => 'nullable|string|max:100',
@@ -72,9 +72,7 @@ class ClientController extends BaseApiController
             'notes' => 'nullable|string'
         ], [
             'name.required' => 'Le nom/raison sociale est requis',
-            'type.required' => 'Le type est requis',
             'type.in' => 'Le type doit être "particulier" ou "entreprise"',
-            'email.required' => 'L\'email principal est requis',
             'email.email' => 'L\'email doit être valide',
             'email.unique' => 'Cet email est déjà utilisé',
             'siret.size' => 'Le SIRET doit contenir exactement 14 caractères',
@@ -83,6 +81,11 @@ class ClientController extends BaseApiController
         ]);
 
         $validated['created_by'] = auth()->id();
+
+        // Assigner une valeur par défaut pour le type si non fourni
+        if (!isset($validated['type']) || empty($validated['type'])) {
+            $validated['type'] = 'particulier';
+        }
 
         $client = Client::create($validated);
 
@@ -529,9 +532,9 @@ class ClientController extends BaseApiController
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|required|in:particulier,entreprise',
-            'email' => 'sometimes|required|email|unique:clients,email,' . $id,
-            'phone' => 'nullable|string|max:20',
+            'type' => 'sometimes|nullable|in:particulier,entreprise',
+            'email' => 'sometimes|nullable|string',  // Supprimer validation email
+            'phone' => 'nullable|string|max:100',  // Augmenter limite téléphone
             'address' => 'nullable|string',
             'siret' => 'nullable|string|size:14|unique:clients,siret,' . $id,
             'sector' => 'nullable|string|max:100',

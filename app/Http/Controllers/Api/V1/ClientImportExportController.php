@@ -139,12 +139,12 @@ class ClientImportExportController extends BaseApiController
     {
         $request->validate([
             'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
-            'mapping' => 'required|array',
+            'mapping' => 'sometimes|array',  // Optionnel
             'duplicate_action' => 'required|in:ignore,replace,update'
         ]);
 
         $file = $request->file('file');
-        $mapping = $request->input('mapping');
+        $mapping = $request->input('mapping', []);  // Array vide par défaut
         $duplicateAction = $request->input('duplicate_action');
 
         try {
@@ -386,8 +386,23 @@ class ClientImportExportController extends BaseApiController
         $headers = [];
         $rowIndex = 0;
 
+        // Détection automatique du séparateur
+        $delimiter = $this->detectCsvDelimiter($path);
+
+        // Lire le contenu et détecter l'encodage
+        $content = file_get_contents($path);
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
+
+        if ($encoding && $encoding !== 'UTF-8') {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+            // Sauvegarder temporairement le fichier converti
+            $tempPath = tempnam(sys_get_temp_dir(), 'csv_converted');
+            file_put_contents($tempPath, $content);
+            $path = $tempPath;
+        }
+
         if (($handle = fopen($path, 'r')) !== false) {
-            while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
                 if ($rowIndex === 0) {
                     $headers = $row;
                     $rowIndex++;
@@ -415,6 +430,11 @@ class ClientImportExportController extends BaseApiController
                 $rowIndex++;
             }
             fclose($handle);
+
+            // Nettoyer le fichier temporaire si créé
+            if (isset($tempPath) && file_exists($tempPath)) {
+                unlink($tempPath);
+            }
         }
 
         return $data;
@@ -535,17 +555,14 @@ class ClientImportExportController extends BaseApiController
     {
         $validator = Validator::make($row, [
             'name' => 'required|string|max:255',
-            'type' => 'required|in:particulier,entreprise',
-            'email' => 'required|email',
-            'phone' => 'nullable|string|max:20',
+            'type' => 'nullable|in:particulier,entreprise',
+            'email' => 'nullable|string',  // Supprimer validation email
+            'phone' => 'nullable|string',  // Supprimer limite 20 caractères
             'siret' => 'nullable|string|size:14',
             'website' => 'nullable|url'
         ], [
             'name.required' => 'Le nom est requis',
-            'type.required' => 'Le type est requis',
             'type.in' => 'Le type doit être "particulier" ou "entreprise"',
-            'email.required' => 'L\'email est requis',
-            'email.email' => 'L\'email doit être valide',
             'siret.size' => 'Le SIRET doit contenir 14 caractères',
             'website.url' => 'Le site web doit être une URL valide'
         ]);
@@ -716,11 +733,11 @@ class ClientImportExportController extends BaseApiController
     {
         return [
             'name' => $row['name'] ?? '',
-            'type' => $row['type'] ?? 'particulier',
-            'email' => $row['email'] ?? '',
+            'type' => $row['type'] ?? 'particulier', // Défaut si non fourni
+            'email' => $row['email'] ?? null,        // Peut être null
             'phone' => $row['phone'] ?? null,
             'address' => $row['address'] ?? null,
-            'siret' => $row['siret'] ?? null,
+            'siret' => !empty($row['siret']) ? $row['siret'] : null,  // NULL si vide pour éviter duplicates
             'sector' => $row['sector'] ?? null,
             'website' => $row['website'] ?? null,
             'notes' => $row['notes'] ?? null,
@@ -841,5 +858,32 @@ class ClientImportExportController extends BaseApiController
         $content = ob_get_clean();
 
         return $content;
+    }
+
+    /**
+     * Detect CSV delimiter
+     */
+    private function detectCsvDelimiter(string $path): string
+    {
+        $delimiters = [',', ';', '\t', '|'];
+        $data = [];
+        $file = fopen($path, 'r');
+
+        if ($file === false) {
+            return ','; // défaut
+        }
+
+        $firstLine = fgets($file);
+        fclose($file);
+
+        foreach ($delimiters as $delimiter) {
+            $columns = str_getcsv($firstLine, $delimiter);
+            if (count($columns) > count($data)) {
+                $data = $columns;
+                $bestDelimiter = $delimiter;
+            }
+        }
+
+        return $bestDelimiter ?? ',';
     }
 }

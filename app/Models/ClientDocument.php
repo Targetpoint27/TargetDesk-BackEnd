@@ -39,6 +39,10 @@ class ClientDocument extends Model
         'title',
         'description',
         'category',
+        'folder_path',
+        'folder_name',
+        'folder_level',
+        'legacy_category',
         'original_name',
         'file_path',
         'mime_type',
@@ -143,6 +147,26 @@ class ClientDocument extends Model
     public function scopeByCategory($query, string $category)
     {
         return $query->where('category', $category);
+    }
+
+    public function scopeByFolder($query, string $folderPath)
+    {
+        return $query->where('folder_path', $folderPath);
+    }
+
+    public function scopeInFolder($query, string $folderPath)
+    {
+        return $query->where('folder_path', 'LIKE', $folderPath . '%');
+    }
+
+    public function scopeByLevel($query, int $level)
+    {
+        return $query->where('folder_level', $level);
+    }
+
+    public function scopeRootLevel($query)
+    {
+        return $query->where('folder_level', 0);
     }
 
     public function scopeLatestVersions($query)

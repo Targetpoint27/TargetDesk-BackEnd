@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseApiController;
 use App\Models\Client;
 use App\Models\ClientDocument;
 use Illuminate\Http\Request;
@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
  *     description="API pour la gestion des documents clients"
  * )
  */
-class ClientDocumentController extends Controller
+class ClientDocumentController extends BaseApiController
 {
     /**
      * @OA\Get(
@@ -199,7 +199,9 @@ class ClientDocumentController extends Controller
             ],
             'title' => 'required|string|min:2|max:255',
             'description' => 'nullable|string|max:1000',
-            'category' => 'required|string|in:contrat,devis,facture,autre'
+            'category' => 'nullable|string|in:contrat,devis,facture,autre',
+            'folder_path' => 'nullable|string|max:500',
+            'folder_name' => 'nullable|string|max:200'
         ]);
 
         if ($validator->fails()) {
@@ -231,11 +233,21 @@ class ClientDocumentController extends Controller
             ], 422);
         }
 
-        // Gestion du versioning - chercher par titre et catégorie
+        // Gestion du versioning - chercher par titre et catégorie/dossier
         $baseKey = Str::slug($request->title);
+        $folderPath = $request->folder_path;
+        $folderName = $request->folder_name;
+        $category = $request->category;
+
         $existingDoc = $client->documents()
             ->where('title', $request->title)
-            ->where('category', $request->category)
+            ->where(function($q) use ($category, $folderPath) {
+                if ($folderPath) {
+                    $q->where('folder_path', $folderPath);
+                } else {
+                    $q->where('category', $category);
+                }
+            })
             ->where('is_active', true)
             ->orderBy('version', 'desc')
             ->first();
@@ -267,12 +279,26 @@ class ClientDocumentController extends Controller
             ], 500);
         }
 
+        // Calculer les informations de dossier si fourni
+        $folderLevel = $folderPath ? substr_count($folderPath, '/') : 0;
+        if (!$folderName && $folderPath) {
+            $folderName = basename($folderPath);
+        }
+
+        // Si on a un folder_path mais pas de category, utiliser "autre" par défaut
+        if ($folderPath && !$category) {
+            $category = 'autre';
+        }
+
         // Création de l'enregistrement
         $document = ClientDocument::create([
             'client_id' => $client->id,
             'title' => $request->title,
             'description' => $request->description,
-            'category' => $request->category,
+            'category' => $category,
+            'folder_path' => $folderPath,
+            'folder_name' => $folderName,
+            'folder_level' => $folderLevel,
             'original_name' => $file->getClientOriginalName(),
             'file_path' => $storedPath,
             'mime_type' => $file->getMimeType(),

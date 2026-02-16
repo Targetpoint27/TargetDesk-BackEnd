@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\UserRoleController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\EmailNotificationPreferenceController;
+use App\Http\Controllers\Api\V1\ClientDocumentFolderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -141,12 +142,22 @@ Route::prefix('v1')->group(function () {
         // Client documents management
         Route::get('clients/{client}/documents', [ClientDocumentController::class, 'index'])->name('clients.documents.index');
         Route::post('clients/{client}/documents', [ClientDocumentController::class, 'store'])->name('clients.documents.store');
+
+        // Client document folders management (AVANT les routes avec {document} pour éviter les conflits)
+        Route::get('clients/{client}/documents/folders', [ClientDocumentFolderController::class, 'index']);
+        Route::post('clients/{client}/documents/folders', [ClientDocumentFolderController::class, 'store']);
+        Route::get('clients/{client}/documents/folders/{folderPath}', [ClientDocumentFolderController::class, 'show']);
+        Route::delete('clients/{client}/documents/folders/{folderPath}', [ClientDocumentFolderController::class, 'destroy']);
+
+        // Routes des documents individuels (APRÈS les routes folders)
         Route::get('clients/{client}/documents/{document}', [ClientDocumentController::class, 'show'])->name('clients.documents.show');
         Route::put('clients/{client}/documents/{document}', [ClientDocumentController::class, 'update'])->name('clients.documents.update');
         Route::delete('clients/{client}/documents/{document}', [ClientDocumentController::class, 'destroy'])->name('clients.documents.destroy');
         Route::get('clients/{client}/documents/{document}/download', [ClientDocumentController::class, 'download'])->name('clients.documents.download');
         Route::get('clients/{client}/documents/{document}/preview', [ClientDocumentController::class, 'preview'])->name('clients.documents.preview');
         Route::get('clients/{client}/documents/{document}/versions', [ClientDocumentController::class, 'versions'])->name('clients.documents.versions');
+        Route::put('clients/{client}/documents/{document}/folder', [ClientDocumentFolderController::class, 'moveDocument']);
+
 
         // Supplier documents management
         Route::get('suppliers/{supplier}/documents', [SupplierDocumentController::class, 'index'])->name('suppliers.documents.index');

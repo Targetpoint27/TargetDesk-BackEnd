@@ -69,7 +69,10 @@ class ClientController extends BaseApiController
             'siret' => 'nullable|string|size:14|unique:clients,siret',
             'sector' => 'nullable|string|max:100',
             'website' => 'nullable|url',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'custom_fields' => 'nullable|array',
+            'custom_fields.*.field_key' => 'required_with:custom_fields|string|max:100|regex:/^[a-zA-Z0-9_]+$/',
+            'custom_fields.*.field_value' => 'nullable'
         ], [
             'name.required' => 'Le nom/raison sociale est requis',
             'type.in' => 'Le type doit être "particulier" ou "entreprise"',
@@ -87,7 +90,24 @@ class ClientController extends BaseApiController
             $validated['type'] = 'particulier';
         }
 
+        // Séparer les champs personnalisés
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
+
         $client = Client::create($validated);
+
+        // Créer les champs personnalisés
+        if (!empty($customFields)) {
+            foreach ($customFields as $fieldData) {
+                $client->customFields()->create([
+                    'field_key' => $fieldData['field_key'],
+                    'field_value' => $fieldData['field_value'],
+                    'field_type' => 'text',
+                    'field_label' => ucfirst($fieldData['field_key']),
+                    'created_by' => auth()->id()
+                ]);
+            }
+        }
 
         // Log d'audit
         Log::info('Client créé', [
@@ -473,7 +493,7 @@ class ClientController extends BaseApiController
      */
     public function show($id): JsonResponse
     {
-        $client = Client::with(['creator:id,name', 'categories'])
+        $client = Client::with(['creator:id,name', 'categories', 'customFields'])
                         ->where('is_active', true)
                         ->find($id);
 
@@ -541,12 +561,16 @@ class ClientController extends BaseApiController
             'website' => 'nullable|url',
             'notes' => 'nullable|string',
             'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id'
+            'category_ids.*' => 'exists:categories,id',
+            'custom_fields' => 'nullable|array',
+            'custom_fields.*.field_key' => 'required_with:custom_fields|string|max:100|regex:/^[a-zA-Z0-9_]+$/',
+            'custom_fields.*.field_value' => 'nullable'
         ]);
 
-        // Séparer les catégories du reste des données
+        // Séparer les catégories et champs personnalisés du reste des données
         $categories = $validated['category_ids'] ?? null;
-        unset($validated['category_ids']);
+        $customFields = $validated['custom_fields'] ?? null;
+        unset($validated['category_ids'], $validated['custom_fields']);
 
         $client->update($validated);
 
@@ -564,8 +588,25 @@ class ClientController extends BaseApiController
             $client->categories()->sync($categoryData);
         }
 
-        // Recharger le client avec les catégories
-        $client = $client->fresh(['creator:id,name', 'categories']);
+        // Mettre à jour les champs personnalisés si fournis
+        if ($customFields !== null) {
+            // Supprimer les anciens champs
+            $client->customFields()->delete();
+
+            // Créer les nouveaux champs
+            foreach ($customFields as $fieldData) {
+                $client->customFields()->create([
+                    'field_key' => $fieldData['field_key'],
+                    'field_value' => $fieldData['field_value'],
+                    'field_type' => 'text',
+                    'field_label' => ucfirst($fieldData['field_key']),
+                    'created_by' => auth()->id()
+                ]);
+            }
+        }
+
+        // Recharger le client avec les catégories et champs personnalisés
+        $client = $client->fresh(['creator:id,name', 'categories', 'customFields']);
 
         // Log d'audit
         Log::info('Client modifié', [

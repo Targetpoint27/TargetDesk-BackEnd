@@ -181,4 +181,113 @@ class Client extends Model
     {
         return $this->hasMany(ClientDocument::class);
     }
+
+    /**
+     * Get the custom fields for this client
+     */
+    public function customFields(): HasMany
+    {
+        return $this->hasMany(ClientCustomField::class);
+    }
+
+    /**
+     * Get active custom fields for this client
+     */
+    public function activeCustomFields(): HasMany
+    {
+        return $this->customFields()->active()->ordered();
+    }
+
+    /**
+     * Get custom field by key
+     */
+    public function getCustomField(string $key): ?ClientCustomField
+    {
+        return $this->customFields()->byKey($key)->active()->first();
+    }
+
+    /**
+     * Get custom field value by key
+     */
+    public function getCustomFieldValue(string $key): mixed
+    {
+        $field = $this->getCustomField($key);
+        return $field ? $field->getValue() : null;
+    }
+
+    /**
+     * Set custom field value
+     */
+    public function setCustomField(string $key, $value, string $type = 'text', array $options = []): ClientCustomField
+    {
+        $field = $this->getCustomField($key);
+
+        if ($field) {
+            $field->setValue($value);
+            $field->save();
+            return $field;
+        }
+
+        return ClientCustomField::createField($this->id, $key, $value, $type, $options);
+    }
+
+    /**
+     * Get documents organized by folders
+     */
+    public function getDocumentsByFolder(): array
+    {
+        // Exclure les fichiers placeholder
+        $documents = $this->documents()->active()
+                         ->where('title', '!=', '.folder_placeholder')
+                         ->orderBy('folder_path')
+                         ->orderBy('title')
+                         ->get();
+
+        $folders = [];
+        foreach ($documents as $document) {
+            $folderPath = $document->folder_path ?? 'Root';
+            if (!isset($folders[$folderPath])) {
+                $folders[$folderPath] = [
+                    'path' => $folderPath,
+                    'name' => $document->folder_name ?? 'Dossier racine',
+                    'level' => $document->folder_level ?? 0,
+                    'documents' => []
+                ];
+            }
+            $folders[$folderPath]['documents'][] = $document;
+        }
+
+        return $folders;
+    }
+
+    /**
+     * Get folder structure for this client
+     */
+    public function getFolderStructure(): array
+    {
+        // Récupérer tous les folder_path uniques des documents réels (pas placeholders)
+        $documents = $this->documents()->active()
+                         ->where('title', '!=', '.folder_placeholder')
+                         ->whereNotNull('folder_path')
+                         ->select('folder_path', 'folder_name', 'folder_level')
+                         ->distinct()
+                         ->orderBy('folder_path')
+                         ->get();
+
+        $folders = [];
+        foreach ($documents as $document) {
+            $path = $document->folder_path;
+            $folders[$path] = [
+                'path' => $path,
+                'name' => $document->folder_name,
+                'level' => $document->folder_level,
+                'document_count' => $this->documents()->active()
+                                        ->where('folder_path', $path)
+                                        ->where('title', '!=', '.folder_placeholder')
+                                        ->count()
+            ];
+        }
+
+        return array_values($folders);
+    }
 }

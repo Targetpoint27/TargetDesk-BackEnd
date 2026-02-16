@@ -265,6 +265,9 @@ Route::prefix('v1')->group(function () {
         // MANAGER ROUTES (manager, admin, super_admin only)
         Route::middleware('role:manager,admin,super_admin')->prefix('call-center/manager')->group(function () {
             Route::get('/dashboard', [App\Http\Controllers\Api\V1\ManagerReportController::class, 'dashboard']);
+            Route::get('/reports/performance', [App\Http\Controllers\Api\V1\ManagerReportController::class, 'performanceReport']);
+            Route::get('/reports/heatmap', [App\Http\Controllers\Api\V1\ManagerReportController::class, 'heatmapReport']);
+            Route::get('/reports/motifs', [App\Http\Controllers\Api\V1\ManagerReportController::class, 'motifsReport']);
         });
 
         // ADMIN ROUTES (admin, super_admin only)

@@ -7512,16 +7512,91 @@
         "/api/v1/call-center/manager/dashboard": {
             "get": {
                 "tags": [
-                    "Manager"
+                    "Manager Reporting"
                 ],
-                "summary": "Consulter le dashboard département (US-CC-050)",
-                "description": "Affiche les indicateurs clés globaux, les tendances et les motifs d'appels.",
+                "summary": "Consulter le dashboard stratégique (US-CC-050)",
+                "description": "Récupère les KPIs principaux avec une comparaison automatique par rapport à la période précédente.",
                 "operationId": "38990ced29500185667362947a6bbaa4",
                 "parameters": [
                     {
                         "name": "period",
                         "in": "query",
-                        "description": "Défaut: month",
+                        "description": "Période d'analyse",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "month",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "kpis": {
+                                                    "properties": {
+                                                        "total_volume": {
+                                                            "properties": {
+                                                                "current": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "previous": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "evolution": {
+                                                                    "type": "number",
+                                                                    "format": "float"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/manager/reports/performance": {
+            "get": {
+                "tags": [
+                    "Manager Reporting"
+                ],
+                "summary": "Performance par équipe et agent (US-CC-050)",
+                "description": "Analyse de la charge de travail et de la performance individuelle des agents du département.",
+                "operationId": "a86426687e97790771cecd72daef56ac",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -7535,7 +7610,77 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Dashboard manager récupéré"
+                        "description": "Statistiques de performance récupérées"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/manager/reports/heatmap": {
+            "get": {
+                "tags": [
+                    "Manager Reporting"
+                ],
+                "summary": "Heatmap des heures d'affluence (US-CC-050)",
+                "description": "Identifie les pics d'appels par heure pour optimiser la planification des ressources.",
+                "operationId": "f34362c207b62d00a422c2f885b0a0b4",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Heatmap horaire générée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/manager/reports/motifs": {
+            "get": {
+                "tags": [
+                    "Manager Reporting"
+                ],
+                "summary": "Top Motifs et Satisfaction Client (US-CC-050)",
+                "description": "Analyse des motifs d'appels les plus fréquents et distribution de la satisfaction client via les réclamations.",
+                "operationId": "db9cd7a8bdf31be1f9b1798ce9e1c83f",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Analyse des motifs et satisfaction récupérée"
                     }
                 },
                 "security": [
@@ -11206,8 +11351,8 @@
             "description": "API pour la gestion des préférences de notifications email"
         },
         {
-            "name": "Manager",
-            "description": "Reporting stratégique pour les managers (Epic 9)"
+            "name": "Manager Reporting",
+            "description": "Strategic reporting and analytics for department managers (Epic 9)"
         },
         {
             "name": "Permissions",

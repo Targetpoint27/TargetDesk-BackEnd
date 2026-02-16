@@ -8779,6 +8779,224 @@
                 ]
             }
         },
+        "/api/v1/call-center/supervisor/calls/{id}/urgency": {
+            "patch": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Changer le niveau d'urgence (US-CC-046)",
+                "description": "Met à jour l'urgence d'un appel spécifique.",
+                "operationId": "84c255ecc5de893e333e3ba7f8723cdd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "urgency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "normal",
+                                            "urgent",
+                                            "critique"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Urgence mise à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/agents/{id}/notify": {
+            "post": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Notifier un agent (US-CC-046)",
+                "description": "Envoie une notification de rappel à un agent pour un appel spécifique.",
+                "operationId": "8c5fbc07f9f660545235e9b8a7c9e27c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "call_id": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Agent notifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/agents/{id}/calls": {
+            "get": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Consulter les missions d'un agent",
+                "description": "Récupère les appels actifs assignés à un agent spécifique.",
+                "operationId": "22c5f52eef633f0d531c5c5331bb723e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Appels récupérés"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/complaints/{id}/escalate": {
+            "post": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Escalader au manager (US-CC-047)",
+                "description": "Signale une réclamation critique au niveau supérieur.",
+                "operationId": "5e7977611bdc7f77d9634ee057325276",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Réclamation escaladée"
+                    },
+                    "404": {
+                        "description": "Réclamation non trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/complaints/{id}/validate": {
+            "post": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Valider une résolution (US-CC-047)",
+                "description": "Confirme que le traitement de la réclamation est satisfaisant.",
+                "operationId": "35fedcd30697684dab5f03292425748b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Résolution validée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/call-center/supervisor/complaints/{id}/close": {
+            "post": {
+                "tags": [
+                    "Supervisor"
+                ],
+                "summary": "Clôturer une réclamation (US-CC-047)",
+                "description": "Ferme définitivement le dossier de réclamation.",
+                "operationId": "b598a382630481b32b12991cf048306a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Réclamation clôturée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/v1/suppliers": {
             "get": {
                 "tags": [

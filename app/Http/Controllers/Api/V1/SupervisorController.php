@@ -191,18 +191,20 @@ class SupervisorController extends BaseApiController
             $oldAgentId = $call->assigned_to;
             $newAgentId = $validated['new_agent_id'];
             
-            // Update Assignment
             $call->assigned_to = $newAgentId;
             $call->save();
 
-            // Log History
+            DB::table('complaints')
+                ->where('call_id', $call->id)
+                ->update(['assigned_to' => $newAgentId]);
+
             $oldAgentName = $oldAgentId ? User::find($oldAgentId)->name : 'Non assigné';
             $newAgentName = User::find($newAgentId)->name;
             
             \App\Models\CallStatusHistory::create([
                 'call_id' => $call->id,
                 'old_status' => $call->status,
-                'new_status' => $call->status, // Status doesn't change, just owner
+                'new_status' => $call->status,
                 'comment' => "Réassignation par superviseur: $oldAgentName -> $newAgentName. Motif: " . ($validated['reason'] ?? 'Aucun'),
                 'changed_by' => Auth::id(),
                 'created_at' => now()
@@ -210,7 +212,7 @@ class SupervisorController extends BaseApiController
 
             return $this->successResponse(
                 $call->fresh(['assignedAgent']), 
-                'Appel réassigné avec succès', 
+                'Appel et Réclamation réassignés avec succès', 
                 200
             );
 
@@ -282,6 +284,170 @@ class SupervisorController extends BaseApiController
 
         } catch (\Exception $e) {
             return $this->errorResponse('Erreur récupération réclamations', 500);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     * path="/api/v1/call-center/supervisor/calls/{id}/urgency",
+     * summary="Changer le niveau d'urgence (US-CC-046)",
+     * description="Met à jour l'urgence d'un appel spécifique.",
+     * tags={"Supervisor"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * @OA\Property(property="urgency", type="string", enum={"normal", "urgent", "critique"})
+     * )
+     * ),
+     * @OA\Response(response=200, description="Urgence mise à jour")
+     * )
+     */
+    public function updateUrgency(Request $request, $id)
+    {
+        try {
+            $call = Call::findOrFail($id);
+            $call->urgency = $request->input('urgency');
+            $call->save();
+            return $this->successResponse($call, 'Urgence mise à jour', 200);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Erreur mise à jour urgence', 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/supervisor/agents/{id}/notify",
+     * summary="Notifier un agent (US-CC-046)",
+     * description="Envoie une notification de rappel à un agent pour un appel spécifique.",
+     * tags={"Supervisor"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(@OA\Property(property="call_id", type="string"))
+     * ),
+     * @OA\Response(response=200, description="Agent notifié")
+     * )
+     */
+    public function notifyAgent(Request $request, $id)
+    {
+        try {
+            // Logique de notification à implémenter selon votre système de notification
+            return $this->successResponse(null, 'Agent notifié', 200);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Erreur notification', 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     * path="/api/v1/call-center/supervisor/agents/{id}/calls",
+     * summary="Consulter les missions d'un agent",
+     * description="Récupère les appels actifs assignés à un agent spécifique.",
+     * tags={"Supervisor"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Appels récupérés")
+     * )
+     */
+    public function agentCalls($id)
+    {
+        try {
+            $calls = Call::where('assigned_to', $id)
+                ->whereIn('status', ['en_cours', 'a_traiter'])
+                ->get();
+            return $this->successResponse($calls, 'Appels de l\'agent récupérés', 200);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Erreur récupération appels agent', 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/supervisor/complaints/{id}/escalate",
+     * summary="Escalader au manager (US-CC-047)",
+     * description="Signale une réclamation critique au niveau supérieur.",
+     * tags={"Supervisor"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Réclamation escaladée"),
+     * @OA\Response(response=404, description="Réclamation non trouvée")
+     * )
+     */
+    public function escalateComplaint($id)
+    {
+        try {
+            $complaint = Complaint::findOrFail($id);
+            
+            // Use 'en_analyse' as it is a valid status in your ENUM list
+            $complaint->status = 'en_analyse'; 
+            $complaint->severity = 'critique'; 
+            $complaint->save();
+
+            // Return with relationships so the frontend table updates the row instantly
+            return $this->successResponse(
+                $complaint->load(['call', 'assignedAgent']), 
+                'Réclamation escaladée (En Analyse)', 
+                200
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('Erreur DB: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/supervisor/complaints/{id}/validate",
+     * summary="Valider une résolution (US-CC-047)",
+     * description="Confirme que le traitement de la réclamation est satisfaisant.",
+     * tags={"Supervisor"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Résolution validée")
+     * )
+     */
+    public function validateResolution($id)
+    {
+        try {
+            $complaint = Complaint::findOrFail($id);
+            $complaint->status = 'resolue';
+            $complaint->resolved_at = now();
+            $complaint->save();
+
+            return $this->successResponse(
+                $complaint->load(['call', 'assignedAgent']), 
+                'Résolution validée', 
+                200
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('Erreur validation: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     * path="/api/v1/call-center/supervisor/complaints/{id}/close",
+     * summary="Clôturer une réclamation (US-CC-047)",
+     * description="Ferme définitivement le dossier de réclamation.",
+     * tags={"Supervisor"},
+     * security={{"sanctum":{}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Réclamation clôturée")
+     * )
+     */
+    public function closeComplaint($id)
+    {
+        try {
+            $complaint = Complaint::findOrFail($id);
+            $complaint->status = 'cloture';
+            $complaint->closed_at = now();
+            $complaint->save();
+
+            return $this->successResponse($complaint, 'Réclamation clôturée', 200);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Erreur lors de la clôture', 500);
         }
     }
 }

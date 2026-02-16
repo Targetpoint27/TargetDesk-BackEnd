@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\UserRoleController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\EmailNotificationPreferenceController;
 use App\Http\Controllers\Api\V1\RingoverCallController;
+use App\Http\Controllers\Api\V1\SupervisorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -253,6 +254,12 @@ Route::prefix('v1')->group(function () {
             Route::put('/calls/{id}/reassign', [App\Http\Controllers\Api\V1\SupervisorController::class, 'reassign']);
             Route::get('/queue', [App\Http\Controllers\Api\V1\SupervisorController::class, 'queueView']);
             Route::get('/complaints', [App\Http\Controllers\Api\V1\SupervisorController::class, 'complaintsView']);
+            Route::patch('/calls/{id}/urgency', [App\Http\Controllers\Api\V1\SupervisorController::class, 'updateUrgency']);
+            Route::post('/agents/{id}/notify', [App\Http\Controllers\Api\V1\SupervisorController::class, 'notifyAgent']);
+            Route::get('/agents/{id}/calls', [App\Http\Controllers\Api\V1\SupervisorController::class, 'agentCalls']);
+            Route::post('/complaints/{id}/escalate', [App\Http\Controllers\Api\V1\SupervisorController::class, 'escalateComplaint']);
+            Route::post('/complaints/{id}/validate', [App\Http\Controllers\Api\V1\SupervisorController::class, 'validateResolution']);
+            Route::post('/complaints/{id}/close', [App\Http\Controllers\Api\V1\SupervisorController::class, 'closeComplaint']);
         });
 
         // MANAGER ROUTES (manager, admin, super_admin only)
